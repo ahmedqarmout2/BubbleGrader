@@ -61,11 +61,12 @@ function drawBubbleBox(ctx, canvas, x, y, columnCount, rowCount) {
 
 function drawQuestionHeaders(x, y, offset, num_questions) {
     ctx.textAlign = "center";
+    ctx.font = "10px Arial"
     var text_x = x;
     var i;
     for (i = 0; i < num_questions; i++) {
         ctx.beginPath();
-        ctx.fillText("Q"+(i+1), text_x + offset, y - padding);
+        ctx.fillText("Q" + (i + 1), text_x + offset, y - padding);
         text_x += offset * 2 + padding;
     }
 }
@@ -76,22 +77,26 @@ ctx.fillStyle = "white";
 ctx.fillRect(0, 0, canvas.width, canvas.height);
 ctx.fillStyle = "black";
 ctx.beginPath();
-ctx.rect(padding, padding, canvas.width - padding * 2, canvas.height - padding * 2);
+ctx.rect(0, 0, canvas.width, canvas.height);
 ctx.stroke();
-ctx.font = "10px Arial";
+ctx.font = "12px Arial";
 
 var student_box_x = calculateStartingX(canvas.width, student_number_length);
 var question_box_x = calculateStartingX(canvas.width, no_of_questions);
 
 var question_box_y = (padding * 8) + (student_number_length + 1) * (2 * bubble_radius + padding);
 
-ctx.fillText("Student Number", student_box_x, padding * 3);
+ctx.fillText("Student Number: ", student_box_x - padding * 12, padding * 4);
+ctx.beginPath();
+ctx.moveTo(student_box_x, padding * 4);
+ctx.lineTo(student_box_x + 10 * (bubble_radius * 2 + padding), padding * 4);
+ctx.stroke();
 
 // draw question headers
 drawQuestionHeaders(question_box_x, question_box_y, bubble_radius, no_of_questions);
 
 // draw student number box
-drawBubbleBox(ctx, canvas, student_box_x, padding * 4, student_number_length, last_single_digit);
+drawBubbleBox(ctx, canvas, student_box_x, padding * 5, student_number_length, last_single_digit);
 
 // draw question box
 drawBubbleBox(ctx, canvas, question_box_x, question_box_y, no_of_questions, max_question_mark);
