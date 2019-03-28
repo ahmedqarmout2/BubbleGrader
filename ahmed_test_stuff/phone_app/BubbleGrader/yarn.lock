@@ -5771,6 +5771,21 @@ react-native-branch@2.2.5:
   resolved "https://registry.yarnpkg.com/react-native-branch/-/react-native-branch-2.2.5.tgz#4074dd63b4973e6397d9ce50e97b57c77a518e9d"
   integrity sha1-QHTdY7SXPmOX2c5Q6XtXx3pRjp0=
 
+react-native-file-upload@^1.0.4:
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/react-native-file-upload/-/react-native-file-upload-1.0.4.tgz#dbe563b52c9d46c28e825726ded84518b8598888"
+  integrity sha1-2+VjtSydRsKOglcm3thFGLhZiIg=
+
+react-native-file-uploader@^0.0.2:
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/react-native-file-uploader/-/react-native-file-uploader-0.0.2.tgz#cfd2c8b52c78a256da59c69beb0cfa5c16530c4e"
+  integrity sha1-z9LItSx4olbaWcab6wz6XBZTDE4=
+
+react-native-files-uploaders@^0.0.1:
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/react-native-files-uploaders/-/react-native-files-uploaders-0.0.1.tgz#8b827b687438fdc51170219cb671b3c50f3ab2ef"
+  integrity sha512-FTzVCNlcGxsZF1wB+2V5r/b9R4ckHBgOG2++wpPwh1y4+p76QoI6r621CUHlI0gU8FaRYJHZtD1Pa+5GVWftbw==
+
 react-native-gesture-handler@~1.0.14:
   version "1.0.17"
   resolved "https://registry.yarnpkg.com/react-native-gesture-handler/-/react-native-gesture-handler-1.0.17.tgz#a046f371f277092157fc2781323d35a02a93daaf"
@@ -5780,7 +5795,7 @@ react-native-gesture-handler@~1.0.14:
     invariant "^2.2.2"
     prop-types "^15.5.10"
 
-"react-native-maps@github:expo/react-native-maps#v0.22.1-exp.0":
+react-native-maps@expo/react-native-maps#v0.22.1-exp.0:
   version "0.22.1"
   resolved "https://codeload.github.com/expo/react-native-maps/tar.gz/e6f98ff7272e5d0a7fe974a41f28593af2d77bb2"
 
