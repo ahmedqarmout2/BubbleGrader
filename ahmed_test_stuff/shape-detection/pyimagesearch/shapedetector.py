@@ -33,8 +33,10 @@ class ShapeDetector:
 			shape = "pentagon"
 
 		# otherwise, we assume the shape is a circle
-		else:
+		elif len(approx) < 10:
 			shape = "circle"
+
+		print(len(approx))
 
 		# return the name of the shape
 		return shape

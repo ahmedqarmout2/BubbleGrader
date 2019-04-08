@@ -141,19 +141,24 @@ export default class CameraExample extends React.Component {
         </View>
       );
     }else{
-      return <KeyboardAvoidingView  behavior="padding" enabled>
+      return <View style={{
+        flex: 1,
+        alignItems: 'stretch'
+      }}>
         <Image
           source={{
             uri: this.state.imgURI
           }}
-          style={{width: 400, height: 400}}
+          style={{
+            flex: 1
+          }}
         />
         <Button
           onPress={() => {this.setState({ scanning: true });}}
           title="Learn More"
           color="#841584"
         />
-      </KeyboardAvoidingView>;
+      </View>
     }
   }
 }
