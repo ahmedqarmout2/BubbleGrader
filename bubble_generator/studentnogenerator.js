@@ -1,6 +1,5 @@
 var student_number_length = 10;
 var num_single_digits = 10;
-var marker_size = 15
 
 var studentCanvas = document.getElementById('student_number_sheet');
 var ctx = studentCanvas.getContext('2d');

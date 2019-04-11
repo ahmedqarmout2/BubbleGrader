@@ -29,7 +29,7 @@ function drawQuestions(ctx, canvas, x, y, offset, num_questions) {
         coordinateJson.push(coordinates)
         text_y += bubble_height + padding * 2;
     }
-    console.log(coordinateJson)
+    console.log(JSON.stringify(coordinateJson))
 }
 
 var questionCanvas = document.getElementById('question_sheet')
