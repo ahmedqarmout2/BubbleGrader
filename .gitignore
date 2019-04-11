@@ -2,3 +2,6 @@ ahmed_test_stuff/node_modules/*
 ahmed_test_stuff/uploads/*
 ahmed_test_stuff/.vscode/*
 yarn*
+.DS_Store
+.gradle/
+.idea/
