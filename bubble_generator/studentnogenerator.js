@@ -4,7 +4,7 @@ var marker_size = 15
 
 var studentCanvas = document.getElementById('student_number_sheet');
 var ctx = studentCanvas.getContext('2d');
-var dimensions = preCalculateVerticalBubbleBox(padding * 2 + marker_size , padding * 8, student_number_length, num_single_digits)
+var dimensions = preCalculateVerticalBubbleBox(padding * 4 + marker_size , padding * 8, student_number_length, num_single_digits)
 studentCanvas.width = dimensions['width']
 studentCanvas.height = dimensions['height']
 ctx.fillStyle = "white";
@@ -15,11 +15,11 @@ ctx.rect(0, 0, studentCanvas.width, studentCanvas.height);
 ctx.stroke();
 ctx.font = "12px Arial";
 
-ctx.fillRect(padding, padding * 8, marker_size, marker_size)
-ctx.fillRect(padding, padding * 8 + marker_size + padding, marker_size, marker_size)
-ctx.fillRect(padding, padding * 8 + (marker_size + padding) * 2, marker_size, marker_size)
+ctx.fillRect(padding * 2, padding * 8, marker_size, marker_size)
+ctx.fillRect(padding * 2, padding * 8 + marker_size + padding, marker_size, marker_size)
+ctx.fillRect(padding * 2, padding * 8 + (marker_size + padding) * 2, marker_size, marker_size)
 
-ctx.fillText("Student Number: ", padding, padding * 6);
+ctx.fillText("Student Number: ", padding * 2, padding * 6);
 
 // draw student number box
-drawBubbleBoxVertical(ctx, studentCanvas, padding * 2 + marker_size, padding * 8, student_number_length, num_single_digits);
+drawBubbleBoxVertical(ctx, studentCanvas, padding * 4 + marker_size, padding * 8, student_number_length, num_single_digits);

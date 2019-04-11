@@ -1,7 +1,7 @@
 // bubble sheet global variables
 var padding = 4;
 var bubble_radius = 10;
-var marker_size = 15
+var marker_size = 20;
 
 function drawBubble(ctx, x, y, radius, text) {
     ctx.beginPath();
@@ -22,7 +22,6 @@ function drawBubbleBoxHorizontal(ctx, canvas, x, y, columnCount, rowCount) {
     var bubble_y = y;
     
     // bubble sheet styling
-    ctx.strokeStyle = "#000000";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.font = "10px Arial";
@@ -76,6 +75,7 @@ function drawBubbleBoxVertical(ctx, canvas, x, y, columnCount, rowCount) {
     }
     
     ctx.strokeStyle = "#999999";
+    ctx.lineWidth = 1;
     ctx.beginPath();
     for (i = 0; i < columnCount - 1; i++) {
         ctx.moveTo(line_x, line_y);
