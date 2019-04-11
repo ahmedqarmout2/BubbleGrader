@@ -17,36 +17,33 @@ import retrofit2.Retrofit;
 
 public class UploadImageTask {
 
-    public static void uploadImages(Context context, @NonNull String uriString) {
-//        if (context == null) return;
-//        if (context.getContentResolver() == null) return;
-//
-//        Retrofit retrofit = new Retrofit.Builder()
-//                .baseUrl("")
-//                .build();
-//
-//        BubbleService service = retrofit.create(BubbleService.class);
-//        File file = new File(uriString);
-//
-//        // create RequestBody instance from file
-//        RequestBody requestFile = RequestBody.create(MediaType.parse("image/*"), file);
-//
-//        // MultipartBody.Part is used to send also the actual file name
-//        MultipartBody.Part body =
-//                MultipartBody.Part.createFormData("picture", file.getName(), requestFile);
-//
-//        Call<ResponseBody> call = service.uploadPhotos(body);
-//        call.enqueue(new Callback<ResponseBody>() {
-//            @Override
-//            public void onResponse(Call<ResponseBody> call,
-//                                   Response<ResponseBody> response) {
-//                Log.v("Upload", "success");
-//            }
-//
-//            @Override
-//            public void onFailure(Call<ResponseBody> call, Throwable t) {
-//                Log.e("Upload error:", t.getMessage());
-//            }
-//        });
+    public static void uploadImages(@NonNull String uriString) {
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("127.0.0.1")
+                .build();
+
+        BubbleService service = retrofit.create(BubbleService.class);
+        File file = new File(uriString);
+
+        // create RequestBody instance from file
+        RequestBody requestFile = RequestBody.create(MediaType.parse("image/*"), file);
+
+        // MultipartBody.Part is used to send also the actual file name
+        MultipartBody.Part body =
+                MultipartBody.Part.createFormData("picture", file.getName(), requestFile);
+
+        Call<ResponseBody> call = service.uploadPhotos(body);
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call,
+                                   Response<ResponseBody> response) {
+                Log.v("Upload", "success");
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                Log.e("Upload error:", t.getMessage());
+            }
+        });
     }
 }
