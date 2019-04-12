@@ -47,8 +47,8 @@ ctx.stroke();
 ctx.font = "12px Arial";
 
 ctx.fillRect(padding * 10, padding * 2, marker_size, marker_size)
-ctx.fillRect(padding * 10 + marker_size + padding, padding * 2, marker_size, marker_size)
-ctx.fillRect(padding * 10 + (marker_size + padding) * 2, padding * 2, marker_size, marker_size)
+ctx.fillRect(padding * 10 + marker_size + padding + 10, padding * 2, marker_size, marker_size)
+// ctx.fillRect(padding * 10 + marker_size + padding + 20, padding * 2, marker_size, marker_size)
 
 // draw questions
 drawQuestions(ctx, questionCanvas, padding * 4, padding * 4 + marker_size, bubble_radius, no_of_questions);

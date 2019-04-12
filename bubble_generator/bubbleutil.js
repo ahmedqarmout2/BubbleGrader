@@ -1,7 +1,7 @@
 // bubble sheet global variables
 var padding = 4;
-var bubble_radius = 10;
-var marker_size = 20;
+var bubble_radius = 8;
+var marker_size = 24;
 
 function drawBubble(ctx, x, y, radius, text) {
     ctx.beginPath();
@@ -31,7 +31,7 @@ function drawBubbleBoxHorizontal(ctx, canvas, x, y, columnCount, rowCount) {
     for (i = 0; i < rowCount; i++) {
         for (j = 0; j < columnCount; j++) {
             drawBubble(ctx, bubble_x, bubble_y, bubble_radius, j);
-            coordinateJson.push({"x": bubble_x + bubble_radius, "y":bubble_y + bubble_radius})
+            coordinateJson.push({"x": bubble_x + bubble_radius - 40, "y":bubble_y + bubble_radius})
             bubble_x += bubble_radius * 2 + padding;
         }
         bubble_x = start_x;
