@@ -31,7 +31,7 @@ function drawBubbleBoxHorizontal(ctx, canvas, x, y, columnCount, rowCount) {
     for (i = 0; i < rowCount; i++) {
         for (j = 0; j < columnCount; j++) {
             drawBubble(ctx, bubble_x, bubble_y, bubble_radius, j);
-            coordinateJson.push({"x": bubble_x + bubble_radius - 40, "y":bubble_y + bubble_radius})
+            coordinateJson.push({"x": bubble_x - 40, "y":bubble_y - 24 - 4})
             bubble_x += bubble_radius * 2 + padding;
         }
         bubble_x = start_x;

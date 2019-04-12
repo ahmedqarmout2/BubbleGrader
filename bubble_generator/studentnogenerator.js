@@ -16,8 +16,8 @@ ctx.stroke();
 ctx.font = "12px Arial";
 
 ctx.fillRect(padding * 2, padding * 8, marker_size, marker_size)
-ctx.fillRect(padding * 2, padding * 8 + marker_size + padding, marker_size, marker_size)
-ctx.fillRect(padding * 2, padding * 8 + (marker_size + padding) * 2, marker_size, marker_size)
+ctx.fillRect(padding * 2, padding * 8 + marker_size + padding + 10, marker_size, marker_size)
+// ctx.fillRect(padding * 2, padding * 8 + (marker_size + padding) * 2, marker_size, marker_size)
 
 ctx.fillText("Student Number: ", padding * 2, padding * 6);
 
