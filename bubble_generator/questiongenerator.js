@@ -23,6 +23,7 @@ function drawQuestions(ctx, canvas, x, y, offset, num_questions) {
         var coordinates = drawBubbleBoxHorizontal(ctx, canvas, x + padding * 6, text_y, num_single_digits, 2);
         ctx.textAlign = "center";
         ctx.font = "12px Arial"
+        ctx.fillStyle = "black";
         ctx.beginPath();
         ctx.fillText((i + 1) + ")", x, text_y + offset);
         ctx.fillText("___", x, text_y + offset * 3);

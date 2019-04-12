@@ -22,7 +22,9 @@ function drawBubbleBoxHorizontal(ctx, canvas, x, y, columnCount, rowCount) {
     var bubble_y = y;
     
     // bubble sheet styling
+    ctx.strokeStyle = "#999999";
     ctx.textAlign = "center";
+    ctx.fillStyle = "#999999";
     ctx.textBaseline = "middle";
     ctx.font = "10px Arial";
     
@@ -46,10 +48,6 @@ function drawBubbleBoxVertical(ctx, canvas, x, y, columnCount, rowCount) {
     // starting x coordinate
     var start_x = x;
     
-      // keep track of divider line coordinates
-    var line_x = start_x + (bubble_radius * 2) + padding
-    var line_y = y;
-    
     // keep track of current bubble coordinates
     var bubble_x = start_x;
     var bubble_y = y;
@@ -58,9 +56,10 @@ function drawBubbleBoxVertical(ctx, canvas, x, y, columnCount, rowCount) {
     var bubble_height = (rowCount * 2 * bubble_radius) + padding * rowCount;
     
     // bubble sheet styling
-    ctx.strokeStyle = "#000000";
+    ctx.strokeStyle = "#999999";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
+    ctx.fillStyle = "#999999";
     ctx.font = "10px Arial";
 
     var coordinateJson = []
@@ -72,16 +71,6 @@ function drawBubbleBoxVertical(ctx, canvas, x, y, columnCount, rowCount) {
         }
         bubble_x = start_x;
         bubble_y += bubble_radius * 2 + padding;
-    }
-    
-    ctx.strokeStyle = "#999999";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    for (i = 0; i < columnCount - 1; i++) {
-        ctx.moveTo(line_x, line_y);
-        ctx.lineTo(line_x, line_y + bubble_height);
-        ctx.stroke();
-        line_x += bubble_radius * 2 + padding * 2;
     }
     
     return coordinateJson

@@ -65,7 +65,6 @@ public class ScanActivity extends AppCompatActivity implements IScanner, View.On
     private ScanSurfaceView mImageSurfaceView;
     private boolean isPermissionNotGranted;
     private static final String mOpenCvLibrary = "opencv_java3";
-    private static ProgressDialogFragment progressDialogFragment;
     private TextView captureHintText;
     private LinearLayout captureHintLayout;
 
@@ -76,6 +75,9 @@ public class ScanActivity extends AppCompatActivity implements IScanner, View.On
     private View cropRejectBtn;
     private Bitmap copyBitmap;
     private FrameLayout cropLayout;
+
+    private float scaledWidthFactor;
+    private float scaledHeightFactor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -203,6 +205,15 @@ public class ScanActivity extends AppCompatActivity implements IScanner, View.On
         try {
             copyBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
 
+            int height = getWindow().findViewById(Window.ID_ANDROID_CONTENT).getHeight();
+            int width = getWindow().findViewById(Window.ID_ANDROID_CONTENT).getWidth();
+
+            int scaledWidth = copyBitmap.getWidth();
+            int scaledHeight = copyBitmap.getHeight();
+
+            scaledWidthFactor = ((float) width) / scaledWidth;
+            scaledHeightFactor = ((float) height) / scaledHeight;
+
             Mat originalMat = new Mat(copyBitmap.getHeight(), copyBitmap.getWidth(), CvType.CV_8UC1);
             Utils.bitmapToMat(copyBitmap, originalMat);
             ArrayList<PointF> points;
@@ -228,12 +239,15 @@ public class ScanActivity extends AppCompatActivity implements IScanner, View.On
 
                 int index = -1;
                 for (PointF pointF : points) {
+                    pointF.x = pointF.x * scaledWidthFactor;
+                    pointF.y = pointF.y * scaledHeightFactor;
                     pointFs.put(++index, pointF);
                 }
 
                 polygonView.setPoints(pointFs);
                 int padding = (int) getResources().getDimension(R.dimen.scan_padding);
-                FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(copyBitmap.getWidth() + 2 * padding, copyBitmap.getHeight() + 2 * padding);
+                FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams((int) (copyBitmap.getWidth() * scaledWidthFactor) + 2 * padding,
+                        (int) (copyBitmap.getHeight() * scaledHeightFactor) + 2 * padding);
                 layoutParams.gravity = Gravity.CENTER;
                 polygonView.setLayoutParams(layoutParams);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
@@ -250,21 +264,6 @@ public class ScanActivity extends AppCompatActivity implements IScanner, View.On
         }
     }
 
-    private synchronized void showProgressDialog(String message) {
-        if (progressDialogFragment != null && progressDialogFragment.isVisible()) {
-            // Before creating another loading dialog, close all opened loading dialogs (if any)
-            progressDialogFragment.dismissAllowingStateLoss();
-        }
-        progressDialogFragment = null;
-        progressDialogFragment = new ProgressDialogFragment(message);
-        FragmentManager fm = getFragmentManager();
-        progressDialogFragment.show(fm, ProgressDialogFragment.class.toString());
-    }
-
-    private synchronized void dismissDialog() {
-        progressDialogFragment.dismissAllowingStateLoss();
-    }
-
     static {
         System.loadLibrary(mOpenCvLibrary);
     }
@@ -276,15 +275,14 @@ public class ScanActivity extends AppCompatActivity implements IScanner, View.On
         Bitmap croppedBitmap;
 
         if (ScanUtils.isScanPointsValid(points)) {
-            Point point1 = new Point(points.get(0).x, points.get(0).y);
-            Point point2 = new Point(points.get(1).x, points.get(1).y);
-            Point point3 = new Point(points.get(2).x, points.get(2).y);
-            Point point4 = new Point(points.get(3).x, points.get(3).y);
+            Point point1 = new Point(points.get(0).x / scaledWidthFactor, points.get(0).y / scaledHeightFactor);
+            Point point2 = new Point(points.get(1).x / scaledWidthFactor, points.get(1).y / scaledHeightFactor);
+            Point point3 = new Point(points.get(2).x / scaledWidthFactor, points.get(2).y / scaledHeightFactor);
+            Point point4 = new Point(points.get(3).x / scaledWidthFactor, points.get(3).y / scaledHeightFactor);
             croppedBitmap = ScanUtils.enhanceReceipt(copyBitmap, point1, point2, point3, point4);
         } else {
             croppedBitmap = copyBitmap;
         }
-//        croppedBitmap = getBWBitmap(croppedBitmap);
 
         String path = ScanUtils.saveToInternalMemory(croppedBitmap, ScanConstants.IMAGE_DIR,
                 ScanConstants.IMAGE_NAME, ScanActivity.this)[0];
@@ -293,17 +291,4 @@ public class ScanActivity extends AppCompatActivity implements IScanner, View.On
         System.gc();
         finish();
     }
-
-//    public Bitmap getBWBitmap(Bitmap original) {
-//        Mat mat = new Mat (original.getWidth(), original.getHeight(), CvType.CV_8UC4);
-//        Bitmap bmp = original.copy(Bitmap.Config.ARGB_8888, true);
-//        Utils.bitmapToMat(bmp, mat);
-//        Imgproc.cvtColor(mat, mat, Imgproc.COLOR_RGB2GRAY);
-//        org.opencv.core.Size s = new Size(5,5);
-//        Imgproc.GaussianBlur(mat, mat, s, 0);
-//        Imgproc.adaptiveThreshold(mat, mat, 255,
-//                Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 11, 0);
-//        Utils.matToBitmap(mat, bmp);
-//        return bmp;
-//    }
 }
