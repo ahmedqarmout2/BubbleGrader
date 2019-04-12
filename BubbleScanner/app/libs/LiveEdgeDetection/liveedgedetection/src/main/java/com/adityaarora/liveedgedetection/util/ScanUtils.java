@@ -424,7 +424,7 @@ public class ScanUtils {
     }
 
     public static String[] saveToInternalMemory(Bitmap bitmap, String mFileDirectory, String
-            mFileName, Context mContext, int mQuality) {
+            mFileName, Context mContext) {
 
         String[] mReturnParams = new String[2];
         File mDirectory = getBaseDirectoryFromPathString(mFileDirectory, mContext);
@@ -432,7 +432,7 @@ public class ScanUtils {
         try {
             FileOutputStream mFileOutputStream = new FileOutputStream(mPath);
             //Compress method used on the Bitmap object to write  image to output stream
-            bitmap.compress(Bitmap.CompressFormat.JPEG, mQuality, mFileOutputStream);
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, mFileOutputStream);
             mFileOutputStream.close();
         } catch (Exception e) {
             Log.e(TAG, e.getMessage(), e);
@@ -497,69 +497,6 @@ public class ScanUtils {
         // Decode bitmap with inSampleSize set
         options.inJustDecodeBounds = false;
         return BitmapFactory.decodeByteArray(data, 0, data.length, options);
-    }
-
-    @Deprecated
-    public static Bitmap loadEfficientBitmap(byte[] data, int width, int height) {
-        Bitmap bmp;
-
-        // First decode with inJustDecodeBounds=true to check dimensions
-        final BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
-        BitmapFactory.decodeByteArray(data, 0, data.length, options);
-
-        // Calculate inSampleSize
-        options.inSampleSize = calculateInSampleSize(options, width, height);
-
-        // Decode bitmap with inSampleSize set
-        options.inJustDecodeBounds = false;
-        bmp = BitmapFactory.decodeByteArray(data, 0, data.length, options);
-        return bmp;
-    }
-
-    private static int calculateInSampleSize(
-            BitmapFactory.Options options, int reqWidth, int reqHeight) {
-        // Raw height and width of image
-        final int height = options.outHeight;
-        final int width = options.outWidth;
-        int inSampleSize = 1;
-
-        if (height > reqHeight || width > reqWidth) {
-
-            final int halfHeight = height / 2;
-            final int halfWidth = width / 2;
-
-            // Calculate the largest inSampleSize value that is a power of 2 and keeps both
-            // height and width larger than the requested height and width.
-            while ((halfHeight / inSampleSize) >= reqHeight
-                    && (halfWidth / inSampleSize) >= reqWidth) {
-                inSampleSize *= 2;
-            }
-        }
-
-        return inSampleSize;
-    }
-
-    public static Bitmap resize(Bitmap image, int maxWidth, int maxHeight) {
-        if (maxHeight > 0 && maxWidth > 0) {
-            int width = image.getWidth();
-            int height = image.getHeight();
-            float ratioBitmap = (float) width / (float) height;
-            float ratioMax = (float) maxWidth / (float) maxHeight;
-
-            int finalWidth = maxWidth;
-            int finalHeight = maxHeight;
-            if (ratioMax > 1) {
-                finalWidth = (int) ((float) maxHeight * ratioBitmap);
-            } else {
-                finalHeight = (int) ((float) maxWidth / ratioBitmap);
-            }
-
-            image = Bitmap.createScaledBitmap(image, finalWidth, finalHeight, true);
-            return image;
-        } else {
-            return image;
-        }
     }
 
     public static Bitmap resizeToScreenContentSize(Bitmap bm, int newWidth, int newHeight) {
