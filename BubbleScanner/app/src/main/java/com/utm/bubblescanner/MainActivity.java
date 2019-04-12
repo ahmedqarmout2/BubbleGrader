@@ -7,14 +7,13 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.View;
 
 import com.adityaarora.liveedgedetection.activity.ScanActivity;
 import com.adityaarora.liveedgedetection.constants.ScanConstants;
 import com.adityaarora.liveedgedetection.util.ScanUtils;
 import com.adityaarora.liveedgedetection.view.TouchImageView;
-import com.utm.bubblescanner.api.UploadImageTask;
+import com.utm.bubblescanner.api.BubbleNetworkManager;
 import com.utm.bubblescanner.util.Constants;
 
 import butterknife.BindView;
@@ -53,7 +52,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             String filePath = data.getExtras().getString(ScanConstants.SCANNED_RESULT);
             Bitmap bitmap = ScanUtils.decodeBitmapFromFile(filePath, ScanConstants.IMAGE_NAME);
             String fileName = filePath+"/"+ScanConstants.IMAGE_NAME;
-            UploadImageTask.uploadImages(this, fileName);
+            BubbleNetworkManager.uploadImages(fileName);
             showScannedImage(bitmap);
         }
     }

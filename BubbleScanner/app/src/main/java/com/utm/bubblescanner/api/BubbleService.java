@@ -10,6 +10,6 @@ import retrofit2.http.Part;
 public interface BubbleService {
 
     @Multipart
-    @POST("upload")
+    @POST("api/upload")
     Call<ResponseBody> uploadPhotos(@Part MultipartBody.Part file);
 }

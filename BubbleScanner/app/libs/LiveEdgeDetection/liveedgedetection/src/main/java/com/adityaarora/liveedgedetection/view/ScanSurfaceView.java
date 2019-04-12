@@ -3,6 +3,7 @@ package com.adityaarora.liveedgedetection.view;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
@@ -17,8 +18,6 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.FrameLayout;
 
-import com.adityaarora.liveedgedetection.activity.ScanActivity;
-import com.adityaarora.liveedgedetection.constants.ScanConstants;
 import com.adityaarora.liveedgedetection.enums.ScanHint;
 import com.adityaarora.liveedgedetection.interfaces.IScanner;
 import com.adityaarora.liveedgedetection.util.ImageDetectionProperties;
@@ -135,6 +134,7 @@ public class ScanSurfaceView extends FrameLayout implements SurfaceHolder.Callba
 
         Camera.Size size = ScanUtils.determinePictureSize(camera, parameters.getPreviewSize());
         parameters.setPictureSize(size.width, size.height);
+        parameters.setJpegQuality(100);
         parameters.setPictureFormat(ImageFormat.JPEG);
 
         camera.setParameters(parameters);
@@ -381,8 +381,7 @@ public class ScanSurfaceView extends FrameLayout implements SurfaceHolder.Callba
             iScanner.displayHint(ScanHint.NO_MESSAGE);
             clearAndInvalidateCanvas();
 
-            Bitmap bitmap = ScanUtils.decodeBitmapFromByteArray(data,
-                    ScanConstants.HIGHER_SAMPLING_THRESHOLD, ScanConstants.HIGHER_SAMPLING_THRESHOLD);
+            Bitmap bitmap = BitmapFactory.decodeByteArray(data, 0, data.length);
 
             Matrix matrix = new Matrix();
             matrix.postRotate(90);

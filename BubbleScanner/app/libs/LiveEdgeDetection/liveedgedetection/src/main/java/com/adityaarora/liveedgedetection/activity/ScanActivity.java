@@ -42,6 +42,7 @@ import org.opencv.android.Utils;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
+import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
@@ -202,10 +203,6 @@ public class ScanActivity extends AppCompatActivity implements IScanner, View.On
         try {
             copyBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true);
 
-            int height = getWindow().findViewById(Window.ID_ANDROID_CONTENT).getHeight();
-            int width = getWindow().findViewById(Window.ID_ANDROID_CONTENT).getWidth();
-
-            copyBitmap = ScanUtils.resizeToScreenContentSize(copyBitmap, width, height);
             Mat originalMat = new Mat(copyBitmap.getHeight(), copyBitmap.getWidth(), CvType.CV_8UC1);
             Utils.bitmapToMat(copyBitmap, originalMat);
             ArrayList<PointF> points;
@@ -290,7 +287,7 @@ public class ScanActivity extends AppCompatActivity implements IScanner, View.On
 //        croppedBitmap = getBWBitmap(croppedBitmap);
 
         String path = ScanUtils.saveToInternalMemory(croppedBitmap, ScanConstants.IMAGE_DIR,
-                ScanConstants.IMAGE_NAME, ScanActivity.this, 90)[0];
+                ScanConstants.IMAGE_NAME, ScanActivity.this)[0];
         setResult(Activity.RESULT_OK, new Intent().putExtra(ScanConstants.SCANNED_RESULT, path));
         //bitmap.recycle();
         System.gc();
@@ -302,8 +299,10 @@ public class ScanActivity extends AppCompatActivity implements IScanner, View.On
 //        Bitmap bmp = original.copy(Bitmap.Config.ARGB_8888, true);
 //        Utils.bitmapToMat(bmp, mat);
 //        Imgproc.cvtColor(mat, mat, Imgproc.COLOR_RGB2GRAY);
+//        org.opencv.core.Size s = new Size(5,5);
+//        Imgproc.GaussianBlur(mat, mat, s, 0);
 //        Imgproc.adaptiveThreshold(mat, mat, 255,
-//                Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 11, 2);
+//                Imgproc.ADAPTIVE_THRESH_GAUSSIAN_C, Imgproc.THRESH_BINARY, 11, 0);
 //        Utils.matToBitmap(mat, bmp);
 //        return bmp;
 //    }

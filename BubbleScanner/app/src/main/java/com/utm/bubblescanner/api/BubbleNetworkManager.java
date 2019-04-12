@@ -1,6 +1,5 @@
 package com.utm.bubblescanner.api;
 
-import android.content.Context;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -15,11 +14,11 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 
-public class UploadImageTask {
+public class BubbleNetworkManager {
 
     public static void uploadImages(@NonNull String uriString) {
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("127.0.0.1")
+                .baseUrl("http://142.1.4.224:3000")
                 .build();
 
         BubbleService service = retrofit.create(BubbleService.class);
@@ -30,7 +29,7 @@ public class UploadImageTask {
 
         // MultipartBody.Part is used to send also the actual file name
         MultipartBody.Part body =
-                MultipartBody.Part.createFormData("picture", file.getName(), requestFile);
+                MultipartBody.Part.createFormData("photo", file.getName(), requestFile);
 
         Call<ResponseBody> call = service.uploadPhotos(body);
         call.enqueue(new Callback<ResponseBody>() {
