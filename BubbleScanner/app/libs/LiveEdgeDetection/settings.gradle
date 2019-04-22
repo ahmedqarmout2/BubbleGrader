@@ -1,2 +1,0 @@
-include ':app', ':liveedgedetection'
-include ':openCVLibrary340'
