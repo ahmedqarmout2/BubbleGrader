@@ -2,5 +2,7 @@
     <string name="app_name">BubbleScanner</string>
     <string name="title_activity_main">MainActivity</string>
 
-    <string name="begin_scan_prompt">Begin by taking a picture.</string>
+    <string name="begin_scan_prompt">Start scanning by clicking the button on the bottom right</string>
+    <string name="enter">Enter</string>
+    <string name="server_address_input_hint">Enter server address here</string>
 </resources>
