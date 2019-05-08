@@ -16,8 +16,6 @@ import com.adityaarora.liveedgedetection.view.TouchImageView;
 import com.utm.bubblescanner.api.BubbleNetworkManager;
 import com.utm.bubblescanner.util.Constants;
 
-import org.opencv.imgproc.Imgproc;
-
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
@@ -52,12 +50,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if (data.getExtras() == null) return;
 
             String filePath = data.getExtras().getString(ScanConstants.SCANNED_RESULT);
-            Bitmap bitmap = ScanUtils.decodeBitmapFromFile(filePath, ScanConstants.IMAGE_NAME);
+            final Bitmap bitmap = ScanUtils.decodeBitmapFromFile(filePath, ScanConstants.IMAGE_NAME);
             String fileName = filePath+"/"+ScanConstants.IMAGE_NAME;
-            BubbleNetworkManager.uploadImages(fileName);
-            showScannedImage(bitmap);
+            BubbleNetworkManager.getInstance().uploadImages(fileName, new BubbleNetworkManager.SuccessCallback() {
+                @Override
+                public void onSuccess() {
+                    showScannedImage(bitmap);
+                }
 
-            // TODO: ahmed right here
+                @Override
+                public void onFailure(String error) {}
+            });
         }
     }
 
