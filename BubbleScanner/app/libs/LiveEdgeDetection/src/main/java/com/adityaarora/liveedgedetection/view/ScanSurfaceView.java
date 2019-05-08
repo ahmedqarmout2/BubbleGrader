@@ -74,7 +74,7 @@ public class ScanSurfaceView extends FrameLayout implements SurfaceHolder.Callba
             requestLayout();
             openCamera();
             this.camera.setPreviewDisplay(holder);
-            setPreviewCallback();
+            startPreview();
         } catch (IOException e) {
             Log.e(TAG, e.getMessage(), e);
         }
@@ -139,7 +139,7 @@ public class ScanSurfaceView extends FrameLayout implements SurfaceHolder.Callba
 
         camera.setParameters(parameters);
         requestLayout();
-        setPreviewCallback();
+        startPreview();
     }
 
     @Override
@@ -160,7 +160,7 @@ public class ScanSurfaceView extends FrameLayout implements SurfaceHolder.Callba
         }
     }
 
-    public void setPreviewCallback() {
+    public void startPreview() {
         this.camera.startPreview();
         this.camera.setPreviewCallback(previewCallback);
     }
@@ -322,17 +322,21 @@ public class ScanSurfaceView extends FrameLayout implements SurfaceHolder.Callba
         if (isCapturing) return;
         if (ScanHint.CAPTURING_IMAGE.equals(scanHint)) {
             try {
-                isCapturing = true;
-                iScanner.displayHint(ScanHint.CAPTURING_IMAGE);
-
-                camera.takePicture(mShutterCallBack, null, pictureCallback);
-                camera.setPreviewCallback(null);
+                takePicture();
 //                iScanner.displayHint(ScanHint.NO_MESSAGE);
 //                clearAndInvalidateCanvas();
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
+    }
+
+    public void takePicture() {
+        isCapturing = true;
+        iScanner.displayHint(ScanHint.CAPTURING_IMAGE);
+
+        camera.takePicture(mShutterCallBack, null, pictureCallback);
+        camera.setPreviewCallback(null);
     }
 
     private void cancelAutoCapture() {
