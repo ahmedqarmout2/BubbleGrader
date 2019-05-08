@@ -16,6 +16,8 @@ import com.adityaarora.liveedgedetection.view.TouchImageView;
 import com.utm.bubblescanner.api.BubbleNetworkManager;
 import com.utm.bubblescanner.util.Constants;
 
+import org.opencv.imgproc.Imgproc;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
@@ -54,6 +56,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             String fileName = filePath+"/"+ScanConstants.IMAGE_NAME;
             BubbleNetworkManager.uploadImages(fileName);
             showScannedImage(bitmap);
+
+            // TODO: ahmed right here
         }
     }
 
