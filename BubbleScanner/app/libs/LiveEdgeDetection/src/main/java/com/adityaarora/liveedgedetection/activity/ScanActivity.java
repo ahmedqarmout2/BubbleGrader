@@ -2,7 +2,6 @@ package com.adityaarora.liveedgedetection.activity;
 
 import android.Manifest;
 import android.app.Activity;
-import android.app.FragmentManager;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
@@ -22,6 +21,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -34,7 +34,6 @@ import com.adityaarora.liveedgedetection.interfaces.IScanner;
 import com.adityaarora.liveedgedetection.util.ScanUtils;
 import com.adityaarora.liveedgedetection.view.PolygonPoints;
 import com.adityaarora.liveedgedetection.view.PolygonView;
-import com.adityaarora.liveedgedetection.view.ProgressDialogFragment;
 import com.adityaarora.liveedgedetection.view.Quadrilateral;
 import com.adityaarora.liveedgedetection.view.ScanSurfaceView;
 
@@ -42,7 +41,6 @@ import org.opencv.android.Utils;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
-import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
@@ -73,6 +71,7 @@ public class ScanActivity extends AppCompatActivity implements IScanner, View.On
     private ImageView cropImageView;
     private View cropAcceptBtn;
     private View cropRejectBtn;
+    private ImageButton manualCapture;
     private Bitmap copyBitmap;
     private FrameLayout cropLayout;
 
@@ -98,6 +97,7 @@ public class ScanActivity extends AppCompatActivity implements IScanner, View.On
         cropAcceptBtn = findViewById(R.id.crop_accept_btn);
         cropRejectBtn = findViewById(R.id.crop_reject_btn);
         cropLayout = findViewById(R.id.crop_layout);
+        manualCapture = findViewById(R.id.manual_capture);
 
         cropAcceptBtn.setOnClickListener(this);
         cropRejectBtn.setOnClickListener(new View.OnClickListener() {
@@ -106,10 +106,19 @@ public class ScanActivity extends AppCompatActivity implements IScanner, View.On
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT)
                     TransitionManager.beginDelayedTransition(containerScan);
                 cropLayout.setVisibility(View.GONE);
-                mImageSurfaceView.setPreviewCallback();
+                mImageSurfaceView.startPreview();
+                manualCapture.setVisibility(View.VISIBLE);
             }
         });
         checkCameraPermissions();
+
+        manualCapture.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mImageSurfaceView.takePicture();
+                manualCapture.setVisibility(View.GONE);
+            }
+        });
     }
 
     private void checkCameraPermissions() {

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/container_scan"
     android:layout_width="match_parent"
@@ -16,7 +17,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="center"
-        android:visibility="gone">
+        android:visibility="gone"
+        tools:visibility="visible">
 
         <ImageView
             android:id="@+id/crop_image_view"
@@ -91,4 +93,12 @@
             android:textColor="@color/white"
             android:textSize="@dimen/text_size_18" />
     </LinearLayout>
+
+    <ImageButton
+        android:id="@+id/manual_capture"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_photo_camera"
+        android:layout_marginBottom="20dp"
+        android:layout_gravity="center|bottom"/>
 </FrameLayout>

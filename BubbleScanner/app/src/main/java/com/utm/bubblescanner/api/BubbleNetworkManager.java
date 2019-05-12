@@ -1,7 +1,9 @@
 package com.utm.bubblescanner.api;
 
 import android.support.annotation.NonNull;
+import android.text.TextUtils;
 import android.util.Log;
+import android.util.Patterns;
 
 import java.io.File;
 
@@ -16,9 +18,27 @@ import retrofit2.Retrofit;
 
 public class BubbleNetworkManager {
 
-    public static void uploadImages(@NonNull String uriString) {
+    private volatile static BubbleNetworkManager mInstance;
+    private String mBaseUrl;
+
+    public static BubbleNetworkManager getInstance() {
+        if (mInstance == null) {
+            synchronized (BubbleNetworkManager.class) {
+                if (mInstance == null) mInstance = new BubbleNetworkManager();
+            }
+        }
+        return mInstance;
+    }
+
+    public void setBaseUrl(String url) {
+        mBaseUrl = url;
+    }
+
+    public void uploadImages(@NonNull String uriString, final SuccessCallback callback) {
+        if (!Patterns.WEB_URL.matcher(mBaseUrl).matches()) callback.onFailure("Invalid url");
+
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("http://142.1.4.224:3000")
+                .baseUrl(mBaseUrl)
                 .build();
 
         BubbleService service = retrofit.create(BubbleService.class);
@@ -37,12 +57,19 @@ public class BubbleNetworkManager {
             public void onResponse(Call<ResponseBody> call,
                                    Response<ResponseBody> response) {
                 Log.v("Upload", "success");
+                callback.onSuccess();
             }
 
             @Override
             public void onFailure(Call<ResponseBody> call, Throwable t) {
                 Log.e("Upload error:", t.getMessage());
+                callback.onFailure(t.getMessage());
             }
         });
+    }
+
+    public interface SuccessCallback {
+        void onSuccess();
+        void onFailure(String error);
     }
 }
