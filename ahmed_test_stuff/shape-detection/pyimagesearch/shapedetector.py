@@ -36,7 +36,7 @@ class ShapeDetector:
 		elif len(approx) < 10:
 			shape = "circle"
 
-		print(len(approx))
+		#print(len(approx))
 
 		# return the name of the shape
 		return shape

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorAccent">#FF4081</color>
+    <color name="colorBlackFortyPercentAlpha">#66000000</color>
+    <color name="colorBlackThirtyFivePercentAlpha">#59000000</color>
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="crop_color">#00d1fe</color>
+    <color name="edge_color">#00d1fe</color>
+    <color name="green">#26d84c</color>
+    <color name="orange">#ff9c00</color>
+    <color name="red">#ff2600</color>
+    <color name="white">#FFFFFF</color>
+    <dimen name="scan_padding">18dp</dimen>
+    <dimen name="text_size_18">18sp</dimen>
+    <string name="adjust_angle">Adjust angle</string>
+    <string name="camera_activity_permission_denied_toast">Please go to app settings and grant camera permission</string>
+    <string name="capturing">Capturing image</string>
+    <string name="finding_rect">Use darker background</string>
+    <string name="hold_still">Hold still</string>
+    <string name="move_away">Move away</string>
+    <string name="move_closer">Move closer</string>
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+    </style>
+    <style name="TextShadow">
+        <item name="android:shadowColor">@color/colorBlackFortyPercentAlpha</item>
+        <item name="android:shadowDx">2</item>
+        <item name="android:shadowDy">2</item>
+        <item name="android:shadowRadius">5</item>
+    </style>
+</resources>
