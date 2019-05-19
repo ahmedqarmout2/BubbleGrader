@@ -9,10 +9,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 
-import com.adityaarora.liveedgedetection.activity.ScanActivity;
-import com.adityaarora.liveedgedetection.constants.ScanConstants;
-import com.adityaarora.liveedgedetection.util.ScanUtils;
-import com.adityaarora.liveedgedetection.view.TouchImageView;
 import com.utm.bubblescanner.api.BubbleNetworkManager;
 import com.utm.bubblescanner.util.Constants;
 

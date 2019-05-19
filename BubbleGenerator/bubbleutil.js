@@ -1,7 +1,7 @@
 // bubble sheet global variables
-var padding = 4;
+var padding = 2;
 var bubble_radius = 8;
-var marker_size = 24;
+var marker_size = 18;
 
 function drawBubble(ctx, x, y, radius, text) {
     ctx.beginPath();

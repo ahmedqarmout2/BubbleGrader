@@ -1,4 +1,4 @@
-var no_of_questions = 7;
+var no_of_questions = 5;
 
 function precalculateQuestionBox(x, y, offset, num_questions) {
     var text_y = y;
@@ -26,7 +26,7 @@ function drawQuestions(ctx, canvas, x, y, offset, num_questions) {
         ctx.fillStyle = "black";
         ctx.beginPath();
         ctx.fillText((i + 1) + ")", x, text_y + offset);
-        ctx.fillText("___", x, text_y + offset * 3);
+        // ctx.fillText("___", x, text_y + offset * 3);
         coordinateJson.push(coordinates)
         text_y += bubble_height + padding * 2;
     }
