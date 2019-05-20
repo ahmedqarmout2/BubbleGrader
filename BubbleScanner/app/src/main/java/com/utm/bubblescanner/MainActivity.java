@@ -9,6 +9,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 
+import com.adityaarora.liveedgedetection.activity.ScanActivity;
+import com.adityaarora.liveedgedetection.constants.ScanConstants;
+import com.adityaarora.liveedgedetection.util.ScanUtils;
+import com.adityaarora.liveedgedetection.view.TouchImageView;
 import com.utm.bubblescanner.api.BubbleNetworkManager;
 import com.utm.bubblescanner.util.Constants;
 
@@ -18,7 +22,8 @@ import butterknife.ButterKnife;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     @BindView(R.id.fab) FloatingActionButton mScanFab;
-    @BindView(R.id.scanned_image) TouchImageView mScannedImage;
+    @BindView(R.id.scanned_image)
+    TouchImageView mScannedImage;
     @BindView(R.id.toolbar) Toolbar mToolbar;
 
     @Override
