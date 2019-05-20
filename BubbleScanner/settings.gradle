@@ -1,3 +1,3 @@
 include ':app', ':openCVLibrary340', ':liveedgedetection'
 project(':openCVLibrary340').projectDir = new File('app/libs/openCVLibrary340')
-project(':liveedgedetection').projectDir = new File('app/libs/liveedgedetection')
+project(':liveedgedetection').projectDir = new File('app/libs/LiveEdgeDetection')
