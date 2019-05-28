@@ -5,9 +5,7 @@ package com.adityaarora.liveedgedetection.constants;
  */
 
 public class ScanConstants {
-    public static final String SCANNED_RESULT = "scannedResult";
-    public static final String IMAGE_NAME = "image";
-    public static final String IMAGE_DIR = "imageDir";
-    public static final int HIGHER_SAMPLING_THRESHOLD = 2200;
-
+    public static final String SCANNED_RESULT = "scanned_result";
+    public static final String IMAGE_PREFIX = "image_";
+    public static final String IMAGE_DIR = "scanned_images";
 }

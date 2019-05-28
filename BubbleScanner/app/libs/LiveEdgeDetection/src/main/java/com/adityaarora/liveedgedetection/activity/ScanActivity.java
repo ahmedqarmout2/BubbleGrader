@@ -43,9 +43,11 @@ import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.imgproc.Imgproc;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.Stack;
 
 import static android.view.View.GONE;
@@ -294,9 +296,8 @@ public class ScanActivity extends AppCompatActivity implements IScanner, View.On
         }
 
         String path = ScanUtils.saveToInternalMemory(croppedBitmap, ScanConstants.IMAGE_DIR,
-                ScanConstants.IMAGE_NAME, ScanActivity.this)[0];
+                ScanConstants.IMAGE_PREFIX + croppedBitmap.hashCode(), ScanActivity.this);
         setResult(Activity.RESULT_OK, new Intent().putExtra(ScanConstants.SCANNED_RESULT, path));
-        //bitmap.recycle();
         System.gc();
         finish();
     }

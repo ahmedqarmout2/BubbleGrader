@@ -423,39 +423,25 @@ public class ScanUtils {
         return output;
     }
 
-    public static String[] saveToInternalMemory(Bitmap bitmap, String mFileDirectory, String
+    public static String saveToInternalMemory(Bitmap bitmap, String mFileDirectory, String
             mFileName, Context mContext) {
 
-        String[] mReturnParams = new String[2];
         File mDirectory = getBaseDirectoryFromPathString(mFileDirectory, mContext);
         File mPath = new File(mDirectory, mFileName);
         try {
             FileOutputStream mFileOutputStream = new FileOutputStream(mPath);
-            //Compress method used on the Bitmap object to write  image to output stream
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, mFileOutputStream);
             mFileOutputStream.close();
         } catch (Exception e) {
             Log.e(TAG, e.getMessage(), e);
         }
-        mReturnParams[0] = mDirectory.getAbsolutePath();
-        mReturnParams[1] = mFileName;
-        return mReturnParams;
+
+        return mPath.getAbsolutePath();
     }
 
     private static File getBaseDirectoryFromPathString(String mPath, Context mContext) {
-
         ContextWrapper mContextWrapper = new ContextWrapper(mContext);
-
         return mContextWrapper.getDir(mPath, Context.MODE_PRIVATE);
-    }
-
-    public static Bitmap decodeBitmapFromFile(String path, String imageName) {
-        // First decode with inJustDecodeBounds=true to check dimensions
-        final BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-
-        return BitmapFactory.decodeFile(new File(path, imageName).getAbsolutePath(),
-                options);
     }
 
     /*

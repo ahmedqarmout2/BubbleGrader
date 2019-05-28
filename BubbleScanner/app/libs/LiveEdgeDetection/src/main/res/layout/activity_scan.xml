@@ -101,4 +101,5 @@
         android:src="@drawable/ic_photo_camera"
         android:layout_marginBottom="20dp"
         android:layout_gravity="center|bottom"/>
+
 </FrameLayout>

@@ -118,7 +118,6 @@ public class ScanSurfaceView extends FrameLayout implements SurfaceHolder.Callba
         }
         if (previewSize == null) {
             previewSize = camera.getParameters().getPreviewSize();
-            //previewSize = ScanUtils.getOptimalPreviewSize(camera, vWidth, vHeight);
         }
 
         Camera.Parameters parameters = camera.getParameters();
@@ -171,7 +170,6 @@ public class ScanSurfaceView extends FrameLayout implements SurfaceHolder.Callba
             if (null != camera) {
                 try {
                     Camera.Size pictureSize = camera.getParameters().getPreviewSize();
-                    Log.d(TAG, "onPreviewFrame - received image " + pictureSize.width + "x" + pictureSize.height);
 
                     Mat yuv = new Mat(new Size(pictureSize.width, pictureSize.height * 1.5), CV_8UC1);
                     yuv.put(0, 0, data);
@@ -206,9 +204,6 @@ public class ScanSurfaceView extends FrameLayout implements SurfaceHolder.Callba
         float previewWidth = (float) stdSize.height;
         float previewHeight = (float) stdSize.width;
 
-        Log.i(TAG, "previewWidth: " + String.valueOf(previewWidth));
-        Log.i(TAG, "previewHeight: " + String.valueOf(previewHeight));
-
         //Points are drawn in anticlockwise direction
         path.moveTo(previewWidth - (float) points[0].y, (float) points[0].x);
         path.lineTo(previewWidth - (float) points[1].y, (float) points[1].x);
@@ -217,7 +212,6 @@ public class ScanSurfaceView extends FrameLayout implements SurfaceHolder.Callba
         path.close();
 
         double area = Math.abs(Imgproc.contourArea(approx));
-        Log.i(TAG, "Contour Area: " + String.valueOf(area));
 
         PathShape newBox = new PathShape(path, previewWidth, previewHeight);
         Paint paint = new Paint();
@@ -234,9 +228,6 @@ public class ScanSurfaceView extends FrameLayout implements SurfaceHolder.Callba
         double bottomWidth = points[2].y - points[1].y;
         if (bottomWidth > resultWidth)
             resultWidth = bottomWidth;
-
-        Log.i(TAG, "resultWidth: " + String.valueOf(resultWidth));
-        Log.i(TAG, "resultHeight: " + String.valueOf(resultHeight));
 
         ImageDetectionProperties imgDetectionPropsObj
                 = new ImageDetectionProperties(previewWidth, previewHeight, resultWidth, resultHeight,
@@ -268,10 +259,6 @@ public class ScanSurfaceView extends FrameLayout implements SurfaceHolder.Callba
                 cancelAutoCapture();
                 scanHint = ScanHint.ADJUST_ANGLE;
             } else {
-                Log.i(TAG, "GREEN" + "(resultWidth/resultHeight) > 4: " + (resultWidth / resultHeight) +
-                        " points[0].x == 0 && points[3].x == 0: " + points[0].x + ": " + points[3].x +
-                        " points[2].x == previewHeight && points[1].x == previewHeight: " + points[2].x + ": " + points[1].x +
-                        "previewHeight: " + previewHeight);
                 scanHint = ScanHint.CAPTURING_IMAGE;
                 clearAndInvalidateCanvas();
 
@@ -280,10 +267,6 @@ public class ScanSurfaceView extends FrameLayout implements SurfaceHolder.Callba
                 }
             }
         }
-        Log.i(TAG, "Preview Area 95%: " + 0.95 * previewArea +
-                " Preview Area 20%: " + 0.20 * previewArea +
-                " Area: " + String.valueOf(area) +
-                " Label: " + scanHint.toString());
 
         border.setStrokeWidth(12);
         iScanner.displayHint(scanHint);
@@ -301,7 +284,6 @@ public class ScanSurfaceView extends FrameLayout implements SurfaceHolder.Callba
                 if (Math.round((float) millisUntilFinished / 1000.0f) != secondsLeft) {
                     secondsLeft = Math.round((float) millisUntilFinished / 1000.0f);
                 }
-                Log.v(TAG, "" + millisUntilFinished / 1000);
                 switch (secondsLeft) {
                     case 1:
                         autoCapture(scanHint);
@@ -323,8 +305,6 @@ public class ScanSurfaceView extends FrameLayout implements SurfaceHolder.Callba
         if (ScanHint.CAPTURING_IMAGE.equals(scanHint)) {
             try {
                 takePicture();
-//                iScanner.displayHint(ScanHint.NO_MESSAGE);
-//                clearAndInvalidateCanvas();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -444,8 +424,6 @@ public class ScanSurfaceView extends FrameLayout implements SurfaceHolder.Callba
                     previewWidth = previewSize.height;
                     previewHeight = previewSize.width;
                 }
-
-                Log.d(TAG, "previewWidth:" + previewWidth + " previewHeight:" + previewHeight);
             }
 
             int nW;
@@ -457,14 +435,12 @@ public class ScanSurfaceView extends FrameLayout implements SurfaceHolder.Callba
 
             // Center the child SurfaceView within the parent.
             if (width * previewHeight < height * previewWidth) {
-                Log.d(TAG, "center horizontally");
                 int scaledChildWidth = (int) ((previewWidth * height / previewHeight) * scale);
                 nW = (width + scaledChildWidth) / 2;
                 nH = (int) (height * scale);
                 top = 0;
                 left = (width - scaledChildWidth) / 2;
             } else {
-                Log.d(TAG, "center vertically");
                 int scaledChildHeight = (int) ((previewHeight * width / previewWidth) * scale);
                 nW = (int) (width * scale);
                 nH = (height + scaledChildHeight) / 2;
@@ -473,11 +449,6 @@ public class ScanSurfaceView extends FrameLayout implements SurfaceHolder.Callba
             }
             mSurfaceView.layout(left, top, nW, nH);
             scanCanvasView.layout(left, top, nW, nH);
-
-            Log.d("layout", "left:" + left);
-            Log.d("layout", "top:" + top);
-            Log.d("layout", "right:" + nW);
-            Log.d("layout", "bottom:" + nH);
         }
     }
 }

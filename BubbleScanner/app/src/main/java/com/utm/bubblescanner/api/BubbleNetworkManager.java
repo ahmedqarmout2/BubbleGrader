@@ -1,7 +1,6 @@
 package com.utm.bubblescanner.api;
 
 import android.support.annotation.NonNull;
-import android.text.TextUtils;
 import android.util.Log;
 import android.util.Patterns;
 
@@ -44,10 +43,7 @@ public class BubbleNetworkManager {
         BubbleService service = retrofit.create(BubbleService.class);
         File file = new File(uriString);
 
-        // create RequestBody instance from file
         RequestBody requestFile = RequestBody.create(MediaType.parse("image/*"), file);
-
-        // MultipartBody.Part is used to send also the actual file name
         MultipartBody.Part body =
                 MultipartBody.Part.createFormData("photo", file.getName(), requestFile);
 
