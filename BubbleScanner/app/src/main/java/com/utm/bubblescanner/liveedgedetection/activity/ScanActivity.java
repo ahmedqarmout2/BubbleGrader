@@ -6,6 +6,7 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.PointF;
+import android.graphics.PorterDuff;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -69,6 +70,7 @@ public class ScanActivity extends AppCompatActivity implements IScanner, View.On
     private ImageView mCropImageView;
     private View mCropAccept;
     private View mCropReject;
+    private View mDoneScanning;
     private ImageButton mManualCapture;
 
     public final static Stack<PolygonPoints> sDraggedPoints = new Stack<>();
@@ -95,16 +97,13 @@ public class ScanActivity extends AppCompatActivity implements IScanner, View.On
         mCropReject = findViewById(R.id.crop_reject_btn);
         mCropLayout = findViewById(R.id.crop_layout);
         mManualCapture = findViewById(R.id.manual_capture);
+        mDoneScanning = findViewById(R.id.done_scanning);
 
         mCropAccept.setOnClickListener(this);
         mCropReject.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                TransitionManager.beginDelayedTransition(mContainerScan);
-                mCropLayout.setVisibility(View.GONE);
-                showAcceptancePrompt(false);
-                mImageSurfaceView.startPreview();
-                mManualCapture.setVisibility(View.VISIBLE);
+                resetScanner();
             }
         });
         checkCameraPermissions();
@@ -113,7 +112,15 @@ public class ScanActivity extends AppCompatActivity implements IScanner, View.On
             @Override
             public void onClick(View view) {
                 mImageSurfaceView.takePicture();
-                mManualCapture.setVisibility(View.INVISIBLE);
+            }
+        });
+
+        mDoneScanning.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setResult(Activity.RESULT_OK);
+                System.gc();
+                finish();
             }
         });
     }
@@ -265,6 +272,8 @@ public class ScanActivity extends AppCompatActivity implements IScanner, View.On
                 TransitionManager.beginDelayedTransition(mContainerScan);
                 mCropLayout.setVisibility(View.VISIBLE);
                 showAcceptancePrompt(true);
+                mManualCapture.setVisibility(View.INVISIBLE);
+                mDoneScanning.setVisibility(View.GONE);
 
                 mCropImageView.setImageBitmap(mCopyBitmap);
                 mCropImageView.setScaleType(ImageView.ScaleType.FIT_XY);
@@ -296,28 +305,59 @@ public class ScanActivity extends AppCompatActivity implements IScanner, View.On
             croppedBitmap = mCopyBitmap;
         }
 
-
         AsyncTask.execute(new Runnable() {
             @Override
             public void run() {
+            showUploadingToast();
             BubbleNetworkManager.getInstance().uploadImages(croppedBitmap, new BubbleNetworkManager.SuccessCallback() {
                 @Override
                 public void onSuccess() {
-                    Toast.makeText(ScanActivity.this, R.string.image_upload_success, Toast.LENGTH_SHORT)
-                            .show();
+                    showUploadSuccessToast();
+                    croppedBitmap.recycle();
                 }
 
                 @Override
                 public void onFailure(String error) {
-                    Toast.makeText(ScanActivity.this, R.string.image_upload_error, Toast.LENGTH_SHORT)
-                            .show();
+                    showUploadFailedToast();
+                    croppedBitmap.recycle();
                 }
             });
             }
         });
-
-        setResult(Activity.RESULT_OK);
         System.gc();
-        finish();
+        resetScanner();
+    }
+
+    /** Image Upload UI Feedback **/
+    private void showUploadingToast() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(ScanActivity.this, R.string.image_uploading, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void showUploadSuccessToast() {
+        Toast success = Toast.makeText(ScanActivity.this, R.string.image_upload_success, Toast.LENGTH_SHORT);
+        View view = success.getView();
+        view.getBackground().setColorFilter(ContextCompat.getColor(this, R.color.acceptGreen), PorterDuff.Mode.SRC_IN);
+        success.show();
+    }
+
+    private void showUploadFailedToast() {
+        Toast failure = Toast.makeText(ScanActivity.this, R.string.image_upload_error, Toast.LENGTH_SHORT);
+        View view = failure.getView();
+        view.getBackground().setColorFilter(ContextCompat.getColor(this, R.color.rejectRed), PorterDuff.Mode.SRC_IN);
+        failure.show();
+    }
+
+    private void resetScanner() {
+        TransitionManager.beginDelayedTransition(mContainerScan);
+        mCropLayout.setVisibility(View.GONE);
+        showAcceptancePrompt(false);
+        mDoneScanning.setVisibility(View.VISIBLE);
+        mImageSurfaceView.startPreview();
+        mManualCapture.setVisibility(View.VISIBLE);
     }
 }
