@@ -95,13 +95,13 @@ public class PolygonView extends FrameLayout {
 
     private void initPaint() {
         paint = new Paint();
-        paint.setColor(getResources().getColor(R.color.crop_color));
+        paint.setColor(getResources().getColor(R.color.cropColor));
         paint.setStrokeWidth(7);
         paint.setAntiAlias(true);
 
         circleFillPaint = new Paint();
         circleFillPaint.setStyle(Paint.Style.FILL);
-        circleFillPaint.setColor(getResources().getColor(R.color.crop_color));
+        circleFillPaint.setColor(getResources().getColor(R.color.cropColor));
         circleFillPaint.setAntiAlias(true);
     }
 
@@ -359,7 +359,7 @@ public class PolygonView extends FrameLayout {
                 case MotionEvent.ACTION_UP:
                     int color = 0;
                     if (isValidShape(getPoints()) && isValidPointer1() && isValidPointer2() && isValidPointer3() && isValidPointer4()) {
-                        color = getResources().getColor(R.color.crop_color);
+                        color = getResources().getColor(R.color.cropColor);
                         latestPoint.x = v.getX();
                         latestPoint.y = v.getY();
                         latestPoint1.x = mainPointer1.getX();
@@ -368,7 +368,7 @@ public class PolygonView extends FrameLayout {
                         latestPoint2.y = mainPointer2.getY();
                     } else {
                         ScanActivity.sDraggedPoints.pop();
-                        color = getResources().getColor(R.color.crop_color);
+                        color = getResources().getColor(R.color.cropColor);
                         v.setX(latestPoint.x);
                         v.setY(latestPoint.y);
                         mainPointer1.setX(latestPoint1.x);
@@ -450,12 +450,12 @@ public class PolygonView extends FrameLayout {
                 case MotionEvent.ACTION_UP:
                     int color = 0;
                     if (isValidShape(getPoints()) && isValidPointer4() && isValidPointer3() && isValidPointer2() && isValidPointer1()) {
-                        color = getResources().getColor(R.color.crop_color);
+                        color = getResources().getColor(R.color.cropColor);
                         latestPoint.x = v.getX();
                         latestPoint.y = v.getY();
                     } else {
                         ScanActivity.sDraggedPoints.pop();
-                        color = getResources().getColor(R.color.crop_color);
+                        color = getResources().getColor(R.color.cropColor);
                         v.setX(latestPoint.x);
                         v.setY(latestPoint.y);
                     }
