@@ -1,3 +1,5 @@
 <resources>
     <dimen name="fab_margin">16dp</dimen>
+    <dimen name="text_size_18">18sp</dimen>
+    <dimen name="scan_padding">18dp</dimen>
 </resources>

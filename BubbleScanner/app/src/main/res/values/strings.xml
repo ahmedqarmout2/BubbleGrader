@@ -5,4 +5,16 @@
     <string name="begin_scan_prompt">Start scanning by clicking the button on the bottom right</string>
     <string name="enter">Enter</string>
     <string name="server_address_input_hint">Enter server address here</string>
+    <string name="server_address_change">Change Server</string>
+
+    <string name="camera_activity_permission_denied_toast">Please go to app settings and grant camera permission</string>
+    <string name="darker_background_hint">Use darker background</string>
+    <string name="move_away_hint">Move away</string>
+    <string name="move_closer_hint">Move closer</string>
+    <string name="adjust_angle_hint">Adjust angle</string>
+    <string name="hold_still_hint">Hold still</string>
+    <string name="capturing_hint">Capturing image</string>
+
+    <string name="image_upload_success">An image has uploaded successfully.</string>
+    <string name="image_upload_error">An image has failed to upload. Please try again.</string>
 </resources>

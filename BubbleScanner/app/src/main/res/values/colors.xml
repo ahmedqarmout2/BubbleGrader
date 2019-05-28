@@ -3,4 +3,18 @@
     <color name="colorPrimary">#008577</color>
     <color name="colorPrimaryDark">#00574B</color>
     <color name="colorAccent">#D81B60</color>
+
+    <color name="colorBlackFortyPercentAlpha">#66000000</color>
+    <color name="white">#FFFFFF</color>
+    <color name="red">#ff2600</color>
+    <color name="green">#26d84c</color>
+
+    <color name="orange">#ff9c00</color>
+    <color name="edge_color">#00d1fe</color>
+    <color name="crop_color">#00d1fe</color>
+
+    <color name="accept_green">#31AF91</color>
+    <color name="reject_red">#C93636</color>
+
+    <color name="colorBlackThirtyFivePercentAlpha">#59000000</color>
 </resources>
