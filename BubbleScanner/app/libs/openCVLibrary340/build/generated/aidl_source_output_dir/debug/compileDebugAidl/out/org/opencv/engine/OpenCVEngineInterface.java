@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Original file: /Users/nygellopez/Projects/BubbleGrader/BubbleScanner/app/libs/openCVLibrary340/src/main/aidl/org/opencv/engine/OpenCVEngineInterface.aidl
+ * Original file: /home/fez/Desktop/csc492/BubbleGrader/BubbleScanner/app/libs/openCVLibrary340/src/main/aidl/org/opencv/engine/OpenCVEngineInterface.aidl
  */
 package org.opencv.engine;
 /**

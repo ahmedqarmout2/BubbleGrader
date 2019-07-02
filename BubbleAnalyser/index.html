@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Bubble Analyser</title>
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="stylesheet" href="/css/fontawesome.css">
+    <link href="/mdb/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/mdb/css/mdb.min.css" rel="stylesheet">
+    <link href="/mdb/css/addons/datatables.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/index.css">
+</head>
+
+<body>
+    <!--Navbar-->
+    <nav class="navbar navbar-expand-lg navbar-dark primary-color">
+
+        <!-- Navbar brand -->
+        <a class="navbar-brand" href="#">Bubble Analyser</a>
+
+        <!-- Collapse button -->
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#basicExampleNav"
+            aria-controls="basicExampleNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Collapsible content -->
+        <div class="collapse navbar-collapse" id="basicExampleNav">
+            <ul class="navbar-nav mr-auto"></ul>
+            <div class="md-form my-0">
+                <button class="btn btn-default" data-toggle="modal" data-target="#basicExampleModal">New Project<i
+                        class="fas fa-plus-circle ml-1"></i></button>
+            </div>
+        </div>
+        <!-- Collapsible content -->
+
+    </nav>
+    <!--/.Navbar-->
+
+    <div class="modal fade" id="basicExampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Create New Project</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="md-form">
+                        <i class="fas fa-file prefix"></i>
+                        <input type="text" id="inputIconEx1" class="form-control">
+                        <label for="inputIconEx1">Project Name</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" data-dismiss="modal"
+                        onClick="create_project()">Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="basicExampleModal2" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Upload Class List</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" id="inputGroupFileAddon01">Upload</span>
+                        </div>
+                        <div class="custom-file">
+                            <form id="upload-file" method="post" enctype="multipart/form-data">
+                                <fieldset>
+                                    <input type="file" class="custom-file-input" id="inputGroupFile01"
+                                        aria-describedby="inputGroupFileAddon01">
+                                    <label class="custom-file-label" for="inputGroupFile01"
+                                        id="inputGroupFile01label">Choose file</label>
+                                </fieldset>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" data-dismiss="modal"
+                        onClick="upload_file();">Upload</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row" style="margin: 10px;">
+        <div class="col-3">
+            <div class="list-group" id="list-tab" role="tablist"></div>
+        </div>
+        <div class="col-9">
+            <div class="tab-content" id="nav-tabContent"></div>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="/mdb/js/jquery-3.4.1.min.js"></script>
+    <script type="text/javascript" src="/mdb/js/popper.min.js"></script>
+    <script type="text/javascript" src="/mdb/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="/mdb/js/mdb.min.js"></script>
+    <script type="text/javascript" src="/mdb/js/addons/datatables.min.js"></script>
+    <script src="/js/index.js"></script>
+</body>
+
+</html>

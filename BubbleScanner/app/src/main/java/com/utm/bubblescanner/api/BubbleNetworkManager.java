@@ -53,7 +53,7 @@ public class BubbleNetworkManager {
         RequestBody requestFile = RequestBody.create(MediaType.parse("image/png"), bitmapData);
         MultipartBody.Part body =
                 MultipartBody.Part.createFormData("photo",
-                        ScanConstants.IMAGE_PREFIX + bitmap.hashCode(), requestFile);
+                        ScanConstants.IMAGE_PREFIX + bitmap.hashCode() + ".png", requestFile);
 
         Call<ResponseBody> call = service.uploadPhotos(body);
         call.enqueue(new Callback<ResponseBody>() {
