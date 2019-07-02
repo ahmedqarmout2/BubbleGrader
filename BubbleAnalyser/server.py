@@ -65,6 +65,7 @@ def upload_photo_file():
         filename = secure_filename(file.filename)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(file_path)
+        analyse_image(file_path)
         return jsonify({'msg': 'ok'})
     else:
         return jsonify({'error': 'unknown file type'})
@@ -141,9 +142,10 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def get_users_list_from_csv_file(file_path):
-    username_index = 0
-    first_name_index = 1
-    last_name_index = 2
+    student_number_index = 0
+    username_index = 1
+    first_name_index = 2
+    last_name_index = 3
     users_list = []
     with open(file_path) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
@@ -153,6 +155,9 @@ def get_users_list_from_csv_file(file_path):
                 is_header = False
                 for col in row:
                     col_name = col.strip().lower()
+                    if (col_name == 'student number'):
+                        student_number_index = row.index(col)
+                        is_header = True
                     if (col_name == 'username'):
                         username_index = row.index(col)
                         is_header = True
@@ -165,13 +170,12 @@ def get_users_list_from_csv_file(file_path):
                 if is_header:
                     continue
             users_list.append({
+                'student number': row[student_number_index],
                 'username': row[username_index],
                 'first name': row[first_name_index],
                 'last name': row[last_name_index]
             })
-            print(", ".join(row))
             line_count += 1
-        print('Processed lines: ', line_count)
     return users_list
 
 def random_string(stringLength):
@@ -202,10 +206,14 @@ def analyse_image(path):
     thresh = cv2.threshold(blurred,127,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C)[1]
     edged = cv2.Canny(thresh, 75, 200)
 
-    img = cv2.imread(image_path,0)
-    img = cv2.medianBlur(img,5)
-    cimg = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
-    circles = cv2.HoughCircles(img,cv2.HOUGH_GRADIENT,1,20,param1=50,param2=30,minRadius=10,maxRadius=30) 
+    img = cv2.imread(image_path, 0)
+    img = cv2.medianBlur(img, 5)
+    cimg = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+    circles = cv2.HoughCircles(img, cv2.HOUGH_GRADIENT, 1, 20, param1=50, param2=30, minRadius=10, maxRadius=30) 
+    if circles is None:
+        if (debug_on):
+            print("Could not locate any cirecles")
+        return
     circles = np.uint16(np.around(circles))
     for i in circles[0,:]:
         avg = np.mean(img[i[1]-10:i[1]+10,i[0]-10:i[0]+10])

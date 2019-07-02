@@ -25,6 +25,7 @@ function get_project_data(project_id) {
       users_list.forEach(user_object => {
         users_table += `
           <tr>
+            <td>${user_object['student number']}</td>
             <td>${user_object['username']}</td>
             <td>${user_object['first name']}</td>
             <td>${user_object['last name']}</td>
@@ -68,6 +69,11 @@ function get_project_data(project_id) {
                   <div class="card-body">
                     <div class="input-group mb-3">
                       <div class="input-group-prepend">
+                        <p><b>Project Code:</b> ${data['id'].toUpperCase()}</p>
+                      </div>
+                    </div>
+                    <div class="input-group mb-3">
+                      <div class="input-group-prepend">
                         <span class="input-group-text" id="basic-addon1">Student Number Length</span>
                       </div>
                       <input type="number" id="student_number_length_number" class="form-control" min="1" max="10" value="${data['student_number_length']}">
@@ -92,6 +98,7 @@ function get_project_data(project_id) {
                 <table id="dtBasicExample" class="table table-striped table-bordered table-sm" cellspacing="0" width="100%">
                   <thead>
                     <tr>
+                      <th class="th-sm">Student Number</th>
                       <th class="th-sm">Username</th>
                       <th class="th-sm">First Name</th>
                       <th class="th-sm">Last Name</th>
