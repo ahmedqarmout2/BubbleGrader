@@ -7,6 +7,7 @@
     <string name="done">Done</string>
     <string name="server_address_input_hint">Enter server address here</string>
     <string name="port_number_input_hint">Port no.</string>
+    <string name="project_token_input_hint">Project token</string>
     <string name="server_address_change">Change Server</string>
 
     <string name="camera_activity_permission_denied_toast">Please go to app settings and grant camera permission</string>

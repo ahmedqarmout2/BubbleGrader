@@ -22,6 +22,14 @@
         android:inputType="number"
         android:hint="@string/port_number_input_hint"/>
 
+    <EditText
+        android:id="@+id/project_token_input"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:inputType="number"
+        android:hint="@string/project_token_input_hint"/>
+
     <android.support.design.button.MaterialButton
         android:id="@+id/enter_button"
         android:layout_marginTop="16dp"

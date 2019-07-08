@@ -5,3 +5,4 @@ yarn*
 .DS_Store
 .gradle/
 .idea/
+BubbleScanner/app/libs/openCVLibrary340/build/*

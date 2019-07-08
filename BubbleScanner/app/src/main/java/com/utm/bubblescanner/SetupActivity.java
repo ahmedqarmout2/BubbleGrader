@@ -22,6 +22,8 @@ public class SetupActivity extends AppCompatActivity implements TextWatcher {
     EditText mServerAddressInput;
     @BindView(R.id.port_number_input)
     EditText mPortNumberInput;
+    @BindView(R.id.project_token_input)
+    EditText mProjectTokenInput;
     @BindView(R.id.enter_button)
     MaterialButton mEnterButton;
 
@@ -40,8 +42,10 @@ public class SetupActivity extends AppCompatActivity implements TextWatcher {
         mEnterButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                BubbleNetworkManager.getInstance()
-                        .setBaseUrl(mServerAddress);
+                BubbleNetworkManager manager = BubbleNetworkManager.getInstance();
+                manager.setBaseUrl(mServerAddress);
+                manager.setProjectToken(mProjectTokenInput.getText().toString());
+
                 startActivity(new Intent(SetupActivity.this, MainActivity.class));
                 finish();
             }

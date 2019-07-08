@@ -23,6 +23,7 @@ public class BubbleNetworkManager {
 
     private volatile static BubbleNetworkManager mInstance;
     private String mBaseUrl;
+    private String mProjectToken;
 
     public static BubbleNetworkManager getInstance() {
         if (mInstance == null) {
@@ -35,6 +36,10 @@ public class BubbleNetworkManager {
 
     public void setBaseUrl(String url) {
         mBaseUrl = url;
+    }
+
+    public void setProjectToken(String token) {
+        mProjectToken = token;
     }
 
     public void uploadImages(@NonNull Bitmap bitmap, final SuccessCallback callback) {
@@ -55,7 +60,7 @@ public class BubbleNetworkManager {
                 MultipartBody.Part.createFormData("photo",
                         ScanConstants.IMAGE_PREFIX + bitmap.hashCode() + ".png", requestFile);
 
-        Call<ResponseBody> call = service.uploadPhotos(body);
+        Call<ResponseBody> call = service.uploadPhotos(mProjectToken, body);
         call.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call,
