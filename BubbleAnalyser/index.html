@@ -64,7 +64,6 @@
         </div>
     </div>
 
-    <!-- Modal -->
     <div class="modal fade" id="basicExampleModal2" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
         aria-hidden="true">
         <div class="modal-dialog" role="document">
@@ -101,11 +100,74 @@
         </div>
     </div>
 
+    <div class="modal fade" id="basicExampleModal3" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Edit Student Mark</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="edit_info">
+                    </div>
+                    <br />
+                    <div class="md-form" style="text-align: center;">
+                        <img id="edit_img" src="smiley.gif" width=450 height=600>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" data-dismiss="modal"
+                        onClick="update_mark()">Update</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="basicExampleModal4" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Upload Exam Paper Sample</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" id="inputGroupFileAddon01">Upload</span>
+                        </div>
+                        <div class="custom-file">
+                            <form id="upload-file" method="post" enctype="multipart/form-data">
+                                <fieldset>
+                                    <input type="file" class="custom-file-input" id="inputGroupFile02"
+                                        aria-describedby="inputGroupFileAddon01">
+                                    <label class="custom-file-label" for="inputGroupFile02"
+                                        id="inputGroupFile02label">Choose file</label>
+                                </fieldset>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" data-dismiss="modal"
+                        onClick="upload_sample();">Upload</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row" style="margin: 10px;">
-        <div class="col-3">
+        <div class="col-1">
             <div class="list-group" id="list-tab" role="tablist"></div>
         </div>
-        <div class="col-9">
+        <div class="col-11">
             <div class="tab-content" id="nav-tabContent"></div>
         </div>
     </div>
