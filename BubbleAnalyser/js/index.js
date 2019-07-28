@@ -1,6 +1,7 @@
 'use strict';
 
 let CURRENT_PROJECT = {}
+let SELECTED_ERROR_IMAGE_PATH = '';
 
 $(function () {
   get_project_list();
@@ -22,16 +23,24 @@ function get_project_data(project_id) {
       CURRENT_PROJECT = data;
       const users_list = data['users_list'];
       const errors_list = data['errors'];
+      const number_of_questions = data['number_of_questions'];
 
       let users_table = '';
       users_list.forEach(user_object => {
+        const student_number = user_object['student number'];
+        let mark_columns = '';
+        for (let i = 0; i < number_of_questions; i++) {
+          const mark = user_object['marks'][i];
+          mark_columns += `<td id="${student_number}_question_${i+1}">${mark ? mark : 0}</td>`;
+        }
+
         users_table += `
           <tr>
-            <td>${user_object['student number']}</td>
-            <td>${user_object['username']}</td>
-            <td>${user_object['first name']}</td>
-            <td>${user_object['last name']}</td>
-            <td>${JSON.stringify(user_object['marks'])}</td>
+            <td id="${student_number}_student_number">${student_number}</td>
+            <td id="${student_number}_username">${user_object['username']}</td>
+            <td id="${student_number}_first_name">${user_object['first name']}</td>
+            <td id="${student_number}_last_name">${user_object['last name']}</td>
+            ${mark_columns}
           </tr>
         `;
       });
@@ -55,6 +64,11 @@ function get_project_data(project_id) {
           </ul>
         `;
         });
+      }
+
+      let questions_columns = '';
+      for (let i = 0; i < number_of_questions; i++) {
+        questions_columns += `<th class="th-sm">Question ${i+1}</th>`;
       }
 
       $('#nav-tabContent').html(
@@ -91,7 +105,7 @@ function get_project_data(project_id) {
                       <div class="input-group-prepend">
                         <span class="input-group-text" id="basic-addon1">Number Of Questions</span>
                       </div>
-                      <input type="number" id="number_of_questions_number" class="form-control" min="1" max="15" value="${data['number_of_questions']}">
+                      <input type="number" id="number_of_questions_number" class="form-control" min="1" max="10" value="${number_of_questions}">
                     </div>
                     <button type="button" class="btn btn-primary" onClick="update_project();">Generate</button>
                     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#basicExampleModal4">Upload Sample</button>
@@ -119,7 +133,7 @@ function get_project_data(project_id) {
                   <div class="card-header">
                     Error List
                   </div>
-                  <div class="card-body">
+                  <div class="card-body" id="errors_table_p">
                     <p>${errors_table}</p>
                   </div>
                 </div>
@@ -136,7 +150,7 @@ function get_project_data(project_id) {
                           <th class="th-sm">Username</th>
                           <th class="th-sm">First Name</th>
                           <th class="th-sm">Last Name</th>
-                          <th class="th-sm">Marks</th>
+                          ${questions_columns}
                         </tr>
                       </thead>
                       <tbody>
@@ -174,12 +188,13 @@ function create_project() {
 
 function edit_error(photo_path) {
   $('#edit_img').attr("src", photo_path);
+  SELECTED_ERROR_IMAGE_PATH = photo_path;
 
   let text = `
     <div class="md-form">
       <i class="fas fa-file prefix"></i>
       <input type="text" id="studentNumberInput" class="form-control">
-      <label for="studentNumberInput">Student Number: </label>
+      <label for="studentNumberInput">Student Number</label>
     </div>
   `;
 
@@ -191,7 +206,7 @@ function edit_error(photo_path) {
           <div class="md-form">
             <i class="fas fa-question prefix"></i>
             <input type="number" min="1" id="questionNumber${i+2}Input" class="form-control">
-            <label for="questionNumber${i+2}Input">Question ${i+2}: </label>
+            <label for="questionNumber${i+2}Input">Question ${i+2}</label>
           </div>
         </div>
       `;
@@ -203,7 +218,7 @@ function edit_error(photo_path) {
           <div class="md-form">
             <i class="fas fa-question prefix"></i>
             <input type="number" min="1" id="questionNumber${i+1}Input" class="form-control">
-            <label for="questionNumber${i+1}Input">Question ${i+1}: </label>
+            <label for="questionNumber${i+1}Input">Question ${i+1}</label>
           </div>
         </div>
         ${second_col}
@@ -214,7 +229,52 @@ function edit_error(photo_path) {
 }
 
 function remove_error(photo_path) {
-  alert(photo_path);
+  SELECTED_ERROR_IMAGE_PATH = photo_path;
+  remove_image();
+}
+
+function remove_image() {
+  $.ajax({
+    method: 'post',
+    url: `/api/remove/image`,
+    data: JSON.stringify({
+      project_id: CURRENT_PROJECT['id'],
+      photo_path: SELECTED_ERROR_IMAGE_PATH
+    }),
+    success: function (data) {
+      var index = CURRENT_PROJECT['errors'].indexOf(SELECTED_ERROR_IMAGE_PATH);
+
+      if (index > -1) {
+        CURRENT_PROJECT['errors'].splice(index, 1);
+      }
+
+      let errors_table = '';
+      if (CURRENT_PROJECT['errors'].length == 0) {
+        errors_table = 'Nothing here yet!';
+      } else {
+        CURRENT_PROJECT['errors'].forEach(error => {
+          const name_list = error.split('/');
+          const name = name_list[name_list.length - 1];
+          errors_table += `
+          <ul class="list-group">
+            <li class="list-group-item d-flex justify-content-between align-items-center" style="align-items: baseline!important; padding: 0!important;">
+              <p>${name}</p>
+              <div style="justify-content: flex-end!important;">
+                <button type="button" class="btn btn-primary px-3" data-toggle="modal" data-target="#basicExampleModal3" onClick="edit_error('${error}')"><i class="fas fa-edit" aria-hidden="true"></i></button>
+                <button type="button" class="btn btn-danger px-3" onClick="remove_error('${error}')"><i class="fas fa-times" aria-hidden="true"></i></button>
+              </div>
+              </li>
+          </ul>
+        `;
+        });
+      }
+
+      $('#errors_table_p').html(errors_table);
+    },
+    error: function (data) {
+      alert('Failed to remove the image!');
+    }
+  });
 }
 
 function update_mark() {
@@ -233,7 +293,13 @@ function update_mark() {
       questions: questions
     }),
     success: function (data) {
-
+      for (let i = 0; i < CURRENT_PROJECT['number_of_questions']; i++) {
+        $(`#${student_number}_question_${i+1}`).html($(`#questionNumber${i+1}Input`).val());
+      }
+      remove_image();
+    },
+    error: function (data) {
+      alert('Failed to update the mark!');
     }
   });
 }
@@ -339,49 +405,79 @@ function generate_image() {
   const studentCanvas = document.getElementById('student_number_sheet');
   const ctx = studentCanvas.getContext('2d');
 
-  studentCanvas.width = 700;
-  studentCanvas.height = 420;
+  studentCanvas.width = 760;
+  studentCanvas.height = 460;
 
+  // draw background
   ctx.fillStyle = "white";
   ctx.fillRect(0, 0, studentCanvas.width, studentCanvas.height);
-  ctx.fillStyle = "black";
-  ctx.lineWidth = 6;
-  ctx.beginPath();
-  ctx.fillRect(0, 0, 20, 20);
-  ctx.fillRect(0, studentCanvas.height - 20, 20, 20);
-  ctx.fillRect(studentCanvas.width - 20, 0, 20, 20);
-  ctx.fillRect(studentCanvas.width - 20, studentCanvas.height - 20, 20, 20);
-  ctx.stroke();
-  ctx.lineWidth = 1;
-  ctx.font = "12px Arial";
-  ctx.fillText("Student Number: ", padding * 2 + 30, padding * 6 + 4);
 
-  draw_bubble_box_vertical(ctx, 30, 22, CURRENT_PROJECT['student_number_length'], 10);
-
-  for (let i = 0; i < CURRENT_PROJECT['number_of_questions']; i++) {
-    draw_bubble_box_vertical(ctx, 30 + i * 44, 220, 2, 10);
-  }
+  draw_text(ctx, 'First Name: _____________________________', studentCanvas.width - 300, 30);
+  draw_text(ctx, 'Last Name: _____________________________', studentCanvas.width - 300, 60);
+  draw_text(ctx, 'Utorid: _________________________________', studentCanvas.width - 300, 90);
+  draw_corners(ctx, studentCanvas.width, studentCanvas.height);
+  draw_student_number_section(ctx, CURRENT_PROJECT['student_number_length']);
+  draw_questions_section(ctx, CURRENT_PROJECT['number_of_questions']);
 
   $('#student_number_sheet_div').show();
 }
 
-function draw_bubble_box_vertical(ctx, x, y, columnCount, rowCount) {
+function draw_corners(ctx, width, height) {
+  ctx.fillStyle = "black";
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.fillRect(0, 0, 20, 20);
+  ctx.fillRect(0, height - 20, 20, 20);
+  ctx.fillRect(width - 20, 0, 20, 20);
+  ctx.fillRect(width - 20, height - 20, 20, 20);
+  ctx.stroke();
+  ctx.closePath();
+}
+
+function draw_text(ctx, text, x, y) {
+  ctx.fillStyle = "#000000";
+  ctx.lineWidth = 1;
+  ctx.font = "12px Arial";
+  ctx.fillText(text, x, y);
+}
+
+function draw_student_number_section(ctx, student_number_length) {
+  const x = 30;
+  const y = 30;
+
+  let text = 'Student Number:';
+  for (let i = 0; i < student_number_length; i++) {
+    text += ' __';
+  }
+
+  draw_text(ctx, text, x, y);
+  draw_bubbles_vertical(ctx, x, y + 8, student_number_length, 10);
+}
+
+function draw_questions_section(ctx, number_of_questions) {
+  const x = 30;
+  const y = 240;
+
+  for (let i = 0; i < number_of_questions; i++) {
+    draw_text(ctx, `Q${i+1}: _____`, x + i * 68 + 28, y);
+    draw_bubbles_vertical(ctx, x + i * 68, y + 12, 2, 10);
+    draw_bubble(ctx, x + i * 68 + 40, y + 12, 8, '0.5', '#ffffff');
+  }
+}
+
+function draw_bubbles_vertical(ctx, x, y, columnCount, rowCount) {
   const padding = 2;
   const bubble_radius = 8;
   let i, j;
   let start_x = x;
   let bubble_x = start_x;
   let bubble_y = y;
-  ctx.strokeStyle = "#999999";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillStyle = "#999999";
-  ctx.font = "10px Arial";
 
   let coordinateJson = []
   for (i = 0; i < rowCount; i++) {
     for (j = 0; j < columnCount; j++) {
-      draw_bubble(ctx, bubble_x, bubble_y, bubble_radius, i);
+      const color = (j % 2 == 0) ? '#ffffff' : '#f0f0f0';
+      draw_bubble(ctx, bubble_x, bubble_y, bubble_radius, i, color);
       coordinateJson.push({
         "x": bubble_x + bubble_radius,
         "y": bubble_y + bubble_radius
@@ -395,10 +491,17 @@ function draw_bubble_box_vertical(ctx, x, y, columnCount, rowCount) {
   return coordinateJson;
 }
 
-function draw_bubble(ctx, x, y, radius, text) {
+function draw_bubble(ctx, x, y, radius, text, color) {
   ctx.beginPath();
-  ctx.fillText(text, x + radius, y + radius);
   ctx.arc(x + radius, y + radius, radius, 0, 2 * Math.PI);
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.strokeStyle = "#f0f0f0";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#d1d1d1";
+  ctx.font = "10px Arial";
   ctx.stroke();
+  ctx.fillText(text, x + radius, y + radius);
   ctx.closePath();
 }

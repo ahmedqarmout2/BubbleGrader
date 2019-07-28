@@ -7,8 +7,9 @@ import string
 import numpy as np
 import cv2
 import imutils
+
 from pyimagesearch.shapedetector import ShapeDetector
-from flask import Flask, jsonify, send_from_directory, flash, request, redirect, url_for
+from flask import Flask, jsonify, send_from_directory, flash, request, redirect, url_for, abort, Response
 from werkzeug.utils import secure_filename
 from pdf2image import convert_from_path
 
@@ -101,13 +102,14 @@ def upload_photo_file():
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(file_path)
         coord = PROJECTS_DETAILS[project_id]['coordinates']
+
         try:
+            print(coord)
             result = analyse_image(file_path, coord)
             if not isinstance(result, dict):
                 PROJECTS_DETAILS[project_id]['errors'].append(file_path)
         except:
             PROJECTS_DETAILS[project_id]['errors'].append(file_path)
-        result = analyse_image(file_path)
         return jsonify({'msg': 'ok'})
     else:
         return jsonify({'error': 'unknown file type'})
@@ -157,7 +159,7 @@ def project_data(project_id):
 def create_project():
     data = request.get_data()
     data_obj = json.loads(data)
-    project_id = random_string(6).lower()
+    project_id = random_string(4).lower()
     project = {
         'id': project_id,
         'name': data_obj['project_name'],
@@ -189,12 +191,31 @@ def update_mark():
     student_number = data_obj['student_number']
     questions = data_obj['questions']
 
+    found = False
     for i in range(len(PROJECTS_DETAILS[project_id]['users_list'])):
         user = PROJECTS_DETAILS[project_id]['users_list'][i]
         if user['student number'] == student_number:
+            found = True
             PROJECTS_DETAILS[project_id]['users_list'][i]['marks'] = questions
 
+    if not found:
+        abort(400)
+        abort(Response('user not found'))
+        return
+
     print(project_id, student_number, questions)
+    return jsonify({'status': 'ok'})
+
+# remove image
+@app.route('/api/remove/image', methods=['POST'])
+def remove_image():
+    data = request.get_data()
+    data_obj = json.loads(data)
+    
+    project_id = data_obj['project_id']
+    photo_path = data_obj['photo_path']
+
+    PROJECTS_DETAILS[project_id]['errors'].remove(photo_path)
     return jsonify({'status': 'ok'})
 
 # simply check if you can ping the server
@@ -315,10 +336,10 @@ def find_coordinates(image_path):
         print(top_two_points)
         print(bottom_two_points)
 
-        result['tr'] = (top_two_points[0][0] + top_two_points[0][2], top_two_points[0][1])
-        result['tl'] = (top_two_points[1][0], top_two_points[1][1])
-        result['br'] = (bottom_two_points[0][0] + bottom_two_points[0][2], bottom_two_points[0][1] + bottom_two_points[0][3])
-        result['bl'] = (bottom_two_points[1][0], bottom_two_points[1][1] + bottom_two_points[1][3])
+        result['tl'] = (top_two_points[0][0] + top_two_points[0][2], top_two_points[0][1])
+        result['tr'] = (top_two_points[1][0], top_two_points[1][1])
+        result['bl'] = (bottom_two_points[0][0] + bottom_two_points[0][2], bottom_two_points[0][1] + bottom_two_points[0][3])
+        result['br'] = (bottom_two_points[1][0], bottom_two_points[1][1] + bottom_two_points[1][3])
 
         print(result)
 
@@ -332,14 +353,10 @@ def analyse_image(image_path, coord):
     width = 1200
     height = 1600
     output_path = './output'
-    debug_on = True
 
     result = {}
 
     print(image_path)
-
-    if (debug_on):
-        print("Debug is enabled.")
 
     orig_image = cv2.imread(image_path)
     image = cv2.resize(orig_image, (width, height))
@@ -353,166 +370,119 @@ def analyse_image(image_path, coord):
 
     cnts = cv2.findContours(edged.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
-    sd = ShapeDetector()
 
-    rectso = []
-    for c in cnts:
-        M = cv2.moments(c)
+    p0 = coord['tl']
+    p1 = coord['tr']
+    p2 = coord['bl']
+    p3 = coord['br']
 
-        if (M["m00"] == 0):
-            continue
+    print(p0, p1, p2, p3)
 
-        #cv2.drawContours(image, [c], -1, (255, 0, 0), -1)
+    cv2.circle(image, (int(p0[0]),int(p0[1])), int(4), (0,0,255))
+    cv2.circle(image, (int(p1[0]),int(p1[1])), int(4), (0,0,255))
+    cv2.circle(image, (int(p2[0]),int(p2[1])), int(4), (0,0,255))
+    cv2.circle(image, (int(p3[0]),int(p3[1])), int(4), (0,0,255))
 
-        cX = int((M["m10"] / M["m00"]))
-        cY = int((M["m01"] / M["m00"]))
-        shape = sd.detect(c)
+    cv2.imwrite(output_path + '/result.png', cv2.resize(image, (600, 800)))
+    return
 
-        if shape == "rectangle" or shape == "square":
-            x,y,w,h = cv2.boundingRect(c)
-            if h > 20 and h < 40 and w > 20 and w < 40:
-                rectso.append((x, y, w, h))
-                cv2.drawContours(image, [c], -1, (255, 0, 0), -1)
-                cv2.rectangle(image, (x,y), (x+w,y+h), (0,255,0), 2)
-                print(shape, cX, cY)
+    pts1 = np.float32([[p0[0], p0[1]], [p1[0], p1[1]], [p2[0], p2[1]], [p3[0], p3[1]]])
+    pts2 = np.float32([[0, 0], [0, 430], [420, 0], [420, 430]])
+    M, status = cv2.findHomography(pts1, pts2)
+    dst = cv2.warpPerspective(image, M, (430, 420))
 
-    print(len(rectso))
+    dst2 = dst
+    dst = cv2.cvtColor(dst, cv2.COLOR_BGR2GRAY)
+    dst = cv2.GaussisdanBlur(dst, (5, 5), 0)
+    dst = cv2.threshold(dst,127,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C)[1]
 
-    if len(rectso) != 4:
-        return "ERROR"
+    # cv2.imshow("New Image", image)
 
-    if len(rectso) == 4:
-        top_two_points = []
-        bottom_two_points = []
-        lowest_y = 12000
-        for p in rectso:
-            if p[1] < lowest_y:
-                lowest_y = p[1]
-
-        for p in rectso:
-            if p[1] < lowest_y+100 and p[1] > lowest_y-100:
-                top_two_points.append(p)
+    studentNumber = '_'*10
+    def_x = 18
+    def_y = 10
+    counter_x = def_x
+    counter_y = def_y
+    for i in range(10):
+        counter_x = def_x
+        counter_y += 18.5
+        for j in range(10):
+            avg = np.mean(dst[int(counter_y)-4:int(counter_y)+8,int(counter_x)-4:int(counter_x)+8])
+            if avg and avg > 200:
+                print('row:', i, 'col:', j, 'value:', avg)
+                studentNumber = studentNumber[:j] + str(i) + studentNumber[j+1:]
+                cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,0,255))
             else:
-                bottom_two_points.append(p)
+                cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,255,0))
+            cv2.rectangle(dst2,(int(counter_x)-4,int(counter_y)-4),(int(counter_x)+8,int(counter_y)+8),(255,0,0))
+            counter_x += 19
 
-        if top_two_points[0][0] > top_two_points[1][0]:
-            top_two_points[0], top_two_points[1] = top_two_points[1], top_two_points[0]
+    print('Student Number: ', studentNumber)
+    result['student_id'] = studentNumber
 
-        if bottom_two_points[0][0] > bottom_two_points[1][0]:
-            bottom_two_points[0], bottom_two_points[1] = bottom_two_points[1], bottom_two_points[0]
-
-        print(top_two_points)
-        print(bottom_two_points)
-
-        p0 = (top_two_points[0][0] + top_two_points[0][2], top_two_points[0][1])
-        p2 = (top_two_points[1][0], top_two_points[1][1])
-        p1 = (bottom_two_points[0][0] + bottom_two_points[0][2], bottom_two_points[0][1] + bottom_two_points[0][3])
-        p3 = (bottom_two_points[1][0], bottom_two_points[1][1] + bottom_two_points[1][3])
-
-        print(p0, p1, p2, p3)
-
-        cv2.circle(image, (int(p0[0]),int(p0[1])), int(4), (0,0,255))
-        cv2.circle(image, (int(p1[0]),int(p1[1])), int(4), (0,0,255))
-        cv2.circle(image, (int(p2[0]),int(p2[1])), int(4), (0,0,255))
-        cv2.circle(image, (int(p3[0]),int(p3[1])), int(4), (0,0,255))
-
-        pts1 = np.float32([[p0[0], p0[1]], [p1[0], p1[1]], [p2[0], p2[1]], [p3[0], p3[1]]])
-        pts2 = np.float32([[0, 0], [0, 430], [420, 0], [420, 430]])
-        M, status = cv2.findHomography(pts1, pts2)
-        dst = cv2.warpPerspective(image, M, (430, 420))
-
-        dst2 = dst
-        dst = cv2.cvtColor(dst, cv2.COLOR_BGR2GRAY)
-        dst = cv2.GaussisdanBlur(dst, (5, 5), 0)
-        dst = cv2.threshold(dst,127,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C)[1]
-
-        #cv2.imshow("New Image", dst)
-
-        studentNumber = '_'*10
-        def_x = 18
-        def_y = 10
+    q1Number = '_'*2
+    def_x = 18
+    def_y = 210
+    counter_x = def_x
+    counter_y = def_y
+    for i in range(2):
         counter_x = def_x
-        counter_y = def_y
-        for i in range(10):
-            counter_x = def_x
-            counter_y += 18.5
-            for j in range(10):
-                avg = np.mean(dst[int(counter_y)-4:int(counter_y)+8,int(counter_x)-4:int(counter_x)+8])
-                if avg and avg > 200:
-                    print('row:', i, 'col:', j, 'value:', avg)
-                    studentNumber = studentNumber[:j] + str(i) + studentNumber[j+1:]
-                    cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,0,255))
-                else:
-                    cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,255,0))
-                cv2.rectangle(dst2,(int(counter_x)-4,int(counter_y)-4),(int(counter_x)+8,int(counter_y)+8),(255,0,0))
-                counter_x += 19
+        counter_y += 18.5
+        for j in range(10):
+            avg = np.mean(dst[int(counter_y)-4:int(counter_y)+8,int(counter_x)-4:int(counter_x)+8])
+            if avg and avg > 200:
+                print('row:', i, 'col:', j, 'value:', avg)
+                q1Number = q1Number[:i] + str(j) + q1Number[i+1:]
+                cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,0,255))
+            else:
+                cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,255,0))
+            cv2.rectangle(dst2,(int(counter_x)-4,int(counter_y)-4),(int(counter_x)+8,int(counter_y)+8),(255,0,0))
+            counter_x += 19
 
-        print('Student Number: ', studentNumber)
-        result['student_id'] = studentNumber
+    result['question_marks'] = []
+    result['question_marks'].append(q1Number)
+    print('Q1: ', q1Number)
 
-        q1Number = '_'*2
-        def_x = 18
-        def_y = 210
+    q2Number = '_'*2
+    def_x = 18
+    def_y = 250
+    counter_x = def_x
+    counter_y = def_y
+    for i in range(2):
         counter_x = def_x
-        counter_y = def_y
-        for i in range(2):
-            counter_x = def_x
-            counter_y += 18.5
-            for j in range(10):
-                avg = np.mean(dst[int(counter_y)-4:int(counter_y)+8,int(counter_x)-4:int(counter_x)+8])
-                if avg and avg > 200:
-                    print('row:', i, 'col:', j, 'value:', avg)
-                    q1Number = q1Number[:i] + str(j) + q1Number[i+1:]
-                    cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,0,255))
-                else:
-                    cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,255,0))
-                cv2.rectangle(dst2,(int(counter_x)-4,int(counter_y)-4),(int(counter_x)+8,int(counter_y)+8),(255,0,0))
-                counter_x += 19
+        counter_y += 18.5
+        for j in range(10):
+            avg = np.mean(dst[int(counter_y)-4:int(counter_y)+8,int(counter_x)-4:int(counter_x)+8])
+            if avg and avg > 200:
+                print('row:', i, 'col:', j, 'value:', avg)
+                q2Number = q2Number[:i] + str(j) + q2Number[i+1:]
+                cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,0,255))
+            else:
+                cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,255,0))
+            cv2.rectangle(dst2,(int(counter_x)-4,int(counter_y)-4),(int(counter_x)+8,int(counter_y)+8),(255,0,0))
+            counter_x += 19
 
-        result['question_marks'] = []
-        result['question_marks'].append(q1Number)
-        print('Q1: ', q1Number)
+    result['question_marks'].append(q2Number)
+    print('Q2: ', q2Number)
 
-        q2Number = '_'*2
-        def_x = 18
-        def_y = 250
+    def_x = 18
+    def_y = 290
+    counter_x = def_x
+    counter_y = def_y
+    for i in range(2):
         counter_x = def_x
-        counter_y = def_y
-        for i in range(2):
-            counter_x = def_x
-            counter_y += 18.5
-            for j in range(10):
-                avg = np.mean(dst[int(counter_y)-4:int(counter_y)+8,int(counter_x)-4:int(counter_x)+8])
-                if avg and avg > 200:
-                    print('row:', i, 'col:', j, 'value:', avg)
-                    q2Number = q2Number[:i] + str(j) + q2Number[i+1:]
-                    cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,0,255))
-                else:
-                    cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,255,0))
-                cv2.rectangle(dst2,(int(counter_x)-4,int(counter_y)-4),(int(counter_x)+8,int(counter_y)+8),(255,0,0))
-                counter_x += 19
+        counter_y += 18.5
+        for j in range(10):
+            avg = np.mean(dst[int(counter_y)-4:int(counter_y)+8,int(counter_x)-4:int(counter_x)+8])
+            if avg and avg > 200:
+                print('row:', i, 'col:', j, 'value:', avg)
+                cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,0,255))
+            else:
+                cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,255,0))
+            cv2.rectangle(dst2,(int(counter_x)-4,int(counter_y)-4),(int(counter_x)+8,int(counter_y)+8),(255,0,0))
+            counter_x += 19
 
-        result['question_marks'].append(q2Number)
-        print('Q2: ', q2Number)
-
-        def_x = 18
-        def_y = 290
-        counter_x = def_x
-        counter_y = def_y
-        for i in range(2):
-            counter_x = def_x
-            counter_y += 18.5
-            for j in range(10):
-                avg = np.mean(dst[int(counter_y)-4:int(counter_y)+8,int(counter_x)-4:int(counter_x)+8])
-                if avg and avg > 200:
-                    print('row:', i, 'col:', j, 'value:', avg)
-                    cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,0,255))
-                else:
-                    cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,255,0))
-                cv2.rectangle(dst2,(int(counter_x)-4,int(counter_y)-4),(int(counter_x)+8,int(counter_y)+8),(255,0,0))
-                counter_x += 19
-
-        #cv2.imshow("New Image 2", dst2)
+    #cv2.imshow("New Image 2", dst2)
 
     cv2.imwrite(output_path + '/result.png', cv2.resize(image, (600, 800)))
     #cv2.imshow("Image", cv2.resize(image, (600, 800)))
