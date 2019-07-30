@@ -8,3 +8,5 @@ yarn*
 BubbleScanner/app/libs/openCVLibrary340/build/*
 BubbleAnalyser/uploads
 BubbleAnalyser/output
+BubbleAnalyser/db
+BubbleAnalyser/exports

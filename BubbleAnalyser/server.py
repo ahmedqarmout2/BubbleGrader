@@ -51,6 +51,7 @@ def upload_classlist_file():
         file.save(file_path)
         users_list = get_users_list_from_csv_file(file_path)
         PROJECTS_DETAILS[project_id]['users_list'] = users_list
+        save_to_file()
         return jsonify({'msg': 'ok'})
     else:
         return jsonify({'error': 'unknown file type'})
@@ -80,6 +81,7 @@ def upload_sample_file():
                 PROJECTS_DETAILS[project_id]['coordinates'] = result
         except:
             pass
+        save_to_file()
         return jsonify({'msg': 'ok'})
     else:
         return jsonify({'error': 'unknown file type'})
@@ -110,6 +112,7 @@ def upload_photo_file():
                 PROJECTS_DETAILS[project_id]['errors'].append(file_path)
         except:
             PROJECTS_DETAILS[project_id]['errors'].append(file_path)
+        save_to_file()
         return jsonify({'msg': 'ok'})
     else:
         return jsonify({'error': 'unknown file type'})
@@ -169,6 +172,7 @@ def create_project():
         'number_of_questions': 5
     }
     PROJECTS_DETAILS[project_id] = project
+    save_to_file()
     return jsonify({'status': 'ok'})
 
 # update project details
@@ -179,6 +183,7 @@ def update_project():
     project_id = data_obj['id']
     PROJECTS_DETAILS[project_id]['student_number_length'] = data_obj['student_number_length']
     PROJECTS_DETAILS[project_id]['number_of_questions'] = data_obj['number_of_questions']
+    save_to_file()
     return jsonify({'status': 'ok'})
 
 # update marks
@@ -203,7 +208,7 @@ def update_mark():
         abort(Response('user not found'))
         return
 
-    print(project_id, student_number, questions)
+    save_to_file()
     return jsonify({'status': 'ok'})
 
 # remove image
@@ -216,6 +221,39 @@ def remove_image():
     photo_path = data_obj['photo_path']
 
     PROJECTS_DETAILS[project_id]['errors'].remove(photo_path)
+    save_to_file()
+    return jsonify({'status': 'ok'})
+
+# export class list to csv
+@app.route('/api/export/classlist', methods=['POST'])
+def export_csv():
+    data = request.get_data()
+    data_obj = json.loads(data)
+    
+    project_id = data_obj['project_id']
+    users_list = PROJECTS_DETAILS[project_id]['users_list']
+    export_file_name = 'exports/' + project_id + '.csv'
+    number_of_questions = PROJECTS_DETAILS[project_id]['number_of_questions']
+    with open(export_file_name, 'w') as file:
+        header = ''
+        header += 'Student Number,'
+        header += 'Username,'
+        header += 'First Name,'
+        header += 'Last Name,'
+        for i in range(number_of_questions):
+            header += 'Question ' + str(i + 1) + ','
+        header = header[:-1] + '\n'
+        file.write(header)
+        for user in users_list:
+            line = ''
+            line += user['student number'] + ','
+            line += user['username'] + ','
+            line += user['first name'] + ','
+            line += user['last name'] + ','
+            for mark in user['marks']:
+                line += mark + ','
+            line = line[:-1] + '\n'
+            file.write(line)
     return jsonify({'status': 'ok'})
 
 # simply check if you can ping the server
@@ -259,7 +297,6 @@ def get_users_list_from_csv_file(file_path):
                 'username': row[username_index],
                 'first name': row[first_name_index],
                 'last name': row[last_name_index],
-                'coordinates': {},
                 'marks': []
             })
             line_count += 1
@@ -489,5 +526,15 @@ def analyse_image(image_path, coord):
 
     return result
 
+def save_to_file():
+    with open('db/db.txt', 'w') as file:
+        file.write(json.dumps(PROJECTS_DETAILS))
+
+def read_from_file():
+    global PROJECTS_DETAILS 
+    with open('db/db.txt', 'r') as file:
+        PROJECTS_DETAILS = json.load(file)
+
 if __name__ == '__main__':
+    read_from_file()
     app.run(host='0.0.0.0')

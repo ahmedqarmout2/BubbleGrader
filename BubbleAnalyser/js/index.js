@@ -126,6 +126,7 @@ function get_project_data(project_id) {
                   <div class="card-body">
                     <p class="card-text">Upload your class list. The list should contain username, first name, last name.</p>
                     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#basicExampleModal2">Upload</button>
+                    <button type="button" class="btn btn-primary" onClick="export_classlist();">Export Classlist</button>
                   </div>
                 </div>
                 <br />
@@ -166,6 +167,22 @@ function get_project_data(project_id) {
       );
       $('#dtBasicExample').DataTable();
       $('.dataTables_length').addClass('bs-select');
+    }
+  });
+}
+
+function export_classlist() {
+  $.ajax({
+    method: 'post',
+    url: `/api/export/classlist`,
+    data: JSON.stringify({
+      project_id: CURRENT_PROJECT['id']
+    }),
+    success: function (data) {
+      alert('done');
+    },
+    error: function (data) {
+      alert('Failed to export classlist!');
     }
   });
 }
