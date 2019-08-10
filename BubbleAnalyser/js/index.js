@@ -3,6 +3,11 @@
 let CURRENT_PROJECT = {}
 let SELECTED_ERROR_IMAGE_PATH = '';
 
+const bottom_left_marker = document.getElementById('bottom_left_marker');
+const bottom_right_marker = document.getElementById('bottom_right_marker');
+const top_left_marker = document.getElementById('top_left_marker');
+const top_right_marker = document.getElementById('top_right_marker');
+
 $(function () {
   get_project_list();
 });
@@ -41,6 +46,9 @@ function get_project_data(project_id) {
             <td id="${student_number}_first_name">${user_object['first name']}</td>
             <td id="${student_number}_last_name">${user_object['last name']}</td>
             ${mark_columns}
+            <td id="${student_number}_action">
+              <button type="button" class="btn btn-primary px-3" data-toggle="modal" data-target="#basicExampleModal3" onClick="edit_error(undefined)"><i class="fas fa-edit" aria-hidden="true"></i></button>
+            </td>
           </tr>
         `;
       });
@@ -70,6 +78,7 @@ function get_project_data(project_id) {
       for (let i = 0; i < number_of_questions; i++) {
         questions_columns += `<th class="th-sm">Question ${i+1}</th>`;
       }
+      questions_columns += '<th class="th-sm">Actions</th>';
 
       $('#nav-tabContent').html(
         `
@@ -107,7 +116,15 @@ function get_project_data(project_id) {
                       </div>
                       <input type="number" id="number_of_questions_number" class="form-control" min="1" max="10" value="${number_of_questions}">
                     </div>
-                    <button type="button" class="btn btn-primary" onClick="update_project();">Generate</button>
+                    <div class="custom-control custom-checkbox">
+                      <input type="checkbox" class="custom-control-input" id="show_utorid_check" ${data['show_utorid'] ? 'checked' : ''}>
+                      <label class="custom-control-label" for="show_utorid_check">Show UTORID</label>
+                    </div>
+                    <div class="custom-control custom-checkbox">
+                      <input type="checkbox" class="custom-control-input" id="show_signature_check" ${data['show_signature'] ? 'checked' : ''}>
+                      <label class="custom-control-label" for="show_signature_check">Show Signature</label>
+                    </div>
+                    <button type="button" class="btn btn-primary" onClick="update_project();">Update</button>
                     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#basicExampleModal4">Upload Sample</button>
                     <br />
                     <br />
@@ -179,7 +196,10 @@ function export_classlist() {
       project_id: CURRENT_PROJECT['id']
     }),
     success: function (data) {
-      alert('done');
+      const file_path = `http://${window.location.host}/${data['file_name']}`;
+      console.log(file_path);
+      const win = window.open(file_path, '_blank');
+      win.focus();
     },
     error: function (data) {
       alert('Failed to export classlist!');
@@ -204,6 +224,10 @@ function create_project() {
 }
 
 function edit_error(photo_path) {
+  if (!photo_path) {
+    $('#edit_img').hide();
+  }
+
   $('#edit_img').attr("src", photo_path);
   SELECTED_ERROR_IMAGE_PATH = photo_path;
 
@@ -313,7 +337,10 @@ function update_mark() {
       for (let i = 0; i < CURRENT_PROJECT['number_of_questions']; i++) {
         $(`#${student_number}_question_${i+1}`).html($(`#questionNumber${i+1}Input`).val());
       }
-      remove_image();
+
+      if (SELECTED_ERROR_IMAGE_PATH) {
+        remove_image();
+      }
     },
     error: function (data) {
       alert('Failed to update the mark!');
@@ -400,38 +427,49 @@ function upload_sample() {
 
 function update_project() {
   const student_number_length = $('#student_number_length_number').val();
-  const number_of_questions = $('#number_of_questions_number').val()
+  const number_of_questions = $('#number_of_questions_number').val();
+  const show_utorid = $('#show_utorid_check').is(':checked');
+  const show_signature = $('#show_signature_check').is(':checked');
   $.ajax({
     method: 'post',
     url: `/api/project/update`,
     data: JSON.stringify({
       id: CURRENT_PROJECT['id'],
       student_number_length: student_number_length,
-      number_of_questions: number_of_questions
+      number_of_questions: number_of_questions,
+      show_utorid: show_utorid,
+      show_signature: show_signature
     }),
     success: function (data) {
       CURRENT_PROJECT['student_number_length'] = student_number_length;
       CURRENT_PROJECT['number_of_questions'] = number_of_questions;
+      CURRENT_PROJECT['show_utorid'] = show_utorid;
+      CURRENT_PROJECT['show_signature'] = show_signature;
       generate_image();
     }
   });
 }
 
 function generate_image() {
-  const padding = 2;
   const studentCanvas = document.getElementById('student_number_sheet');
   const ctx = studentCanvas.getContext('2d');
 
-  studentCanvas.width = 760;
-  studentCanvas.height = 460;
+  studentCanvas.width = 860;
+  studentCanvas.height = 480;
 
   // draw background
   ctx.fillStyle = "white";
   ctx.fillRect(0, 0, studentCanvas.width, studentCanvas.height);
 
-  draw_text(ctx, 'First Name: _____________________________', studentCanvas.width - 300, 30);
-  draw_text(ctx, 'Last Name: _____________________________', studentCanvas.width - 300, 60);
-  draw_text(ctx, 'Utorid: _________________________________', studentCanvas.width - 300, 90);
+  draw_text(ctx, 'First Name: _____________________________', studentCanvas.width - 340, 30);
+  draw_text(ctx, 'Last Name: _____________________________', studentCanvas.width - 340, 60);
+  if (CURRENT_PROJECT['show_utorid']) {
+    draw_text(ctx, 'Utorid: _________________________________', studentCanvas.width - 340, 90);
+  }
+  if (CURRENT_PROJECT['show_signature']) {
+    draw_text(ctx, 'Signature: ______________________________', studentCanvas.width - 340, 120);
+  }
+
   draw_corners(ctx, studentCanvas.width, studentCanvas.height);
   draw_student_number_section(ctx, CURRENT_PROJECT['student_number_length']);
   draw_questions_section(ctx, CURRENT_PROJECT['number_of_questions']);
@@ -440,13 +478,17 @@ function generate_image() {
 }
 
 function draw_corners(ctx, width, height) {
-  ctx.fillStyle = "black";
+  ctx.fillStyle = "#000000";
   ctx.lineWidth = 6;
   ctx.beginPath();
-  ctx.fillRect(0, 0, 20, 20);
-  ctx.fillRect(0, height - 20, 20, 20);
-  ctx.fillRect(width - 20, 0, 20, 20);
-  ctx.fillRect(width - 20, height - 20, 20, 20);
+  // ctx.fillRect(0, 0, 20, 20);
+  // ctx.fillRect(0, height - 20, 20, 20);
+  // ctx.fillRect(width - 20, 0, 20, 20);
+  // ctx.fillRect(width - 20, height - 20, 20, 20);
+  ctx.drawImage(top_left_marker, 0, 0);
+  ctx.drawImage(top_right_marker, width - 50, 0);
+  ctx.drawImage(bottom_left_marker, 0, height - 50);
+  ctx.drawImage(bottom_right_marker, width - 50, height - 50);
   ctx.stroke();
   ctx.closePath();
 }
@@ -459,27 +501,30 @@ function draw_text(ctx, text, x, y) {
 }
 
 function draw_student_number_section(ctx, student_number_length) {
-  const x = 30;
+  const x = 60;
   const y = 30;
 
-  let text = 'Student Number:';
+  draw_text(ctx, 'Student Number:', x, y);
+
   for (let i = 0; i < student_number_length; i++) {
-    text += ' __';
+    draw_text(ctx, '__', x + i * 20, y + 20);
   }
 
-  draw_text(ctx, text, x, y);
-  draw_bubbles_vertical(ctx, x, y + 8, student_number_length, 10);
+  draw_bubbles_vertical(ctx, x, y + 30, student_number_length, 10);
 }
 
 function draw_questions_section(ctx, number_of_questions) {
-  const x = 30;
-  const y = 240;
+  const x = 60;
+  const y = 260;
 
   for (let i = 0; i < number_of_questions; i++) {
     draw_text(ctx, `Q${i+1}: _____`, x + i * 68 + 28, y);
     draw_bubbles_vertical(ctx, x + i * 68, y + 12, 2, 10);
     draw_bubble(ctx, x + i * 68 + 40, y + 12, 8, '0.5', '#ffffff');
   }
+  draw_text(ctx, `Total: _____`, x + number_of_questions * 68 + 28, y);
+  draw_bubbles_vertical(ctx, x + number_of_questions * 68, y + 12, 2, 10);
+  draw_bubble(ctx, x + number_of_questions * 68 + 40, y + 12, 8, '0.5', '#ffffff');
 }
 
 function draw_bubbles_vertical(ctx, x, y, columnCount, rowCount) {

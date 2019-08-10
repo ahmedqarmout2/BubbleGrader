@@ -7,6 +7,7 @@ import string
 import numpy as np
 import cv2
 import imutils
+import datetime
 
 from pyimagesearch.shapedetector import ShapeDetector
 from flask import Flask, jsonify, send_from_directory, flash, request, redirect, url_for, abort, Response
@@ -21,6 +22,17 @@ app.secret_key = 'super secret key lol'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 PROJECTS_DETAILS = {}
+
+#load tracking tags
+tags = [
+    cv2.imread("markers/top_left.png", cv2.IMREAD_GRAYSCALE),
+    cv2.imread("markers/top_right.png", cv2.IMREAD_GRAYSCALE),
+    cv2.imread("markers/bottom_left.png", cv2.IMREAD_GRAYSCALE),
+    cv2.imread("markers/bottom_right.png", cv2.IMREAD_GRAYSCALE)
+]
+
+epsilon = 10 #image error sensitivity
+scaling = [605.0, 835.0] #scaling factor for 8.5in. x 11in. paper
 
 # get projects list
 @app.route('/api/projects/list')
@@ -103,11 +115,12 @@ def upload_photo_file():
         filename = secure_filename(file.filename)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(file_path)
-        coord = PROJECTS_DETAILS[project_id]['coordinates']
+        #coord = PROJECTS_DETAILS[project_id]['coordinates']
 
         try:
-            print(coord)
-            result = analyse_image(file_path, coord)
+            #print(coord)
+            #result = analyse_image(file_path, coord)
+            result = None
             if not isinstance(result, dict):
                 PROJECTS_DETAILS[project_id]['errors'].append(file_path)
         except:
@@ -152,10 +165,20 @@ def js_files(path):
 def css_files(path):
     return send_from_directory('css', path)
 
+# serve marker files
+@app.route('/marker/<path:path>')
+def marker_files(path):
+    return send_from_directory('markers', path)
+
 # get the data for a project
 @app.route('/api/project/data/<project_id>')
 def project_data(project_id):
     return jsonify(PROJECTS_DETAILS[project_id])
+
+# download exported files
+@app.route('/exports/<file_name>')
+def export_list(file_name):
+    return send_from_directory('exports', file_name)
 
 # create a new project
 @app.route('/api/project/create', methods=['POST'])
@@ -169,7 +192,9 @@ def create_project():
         'users_list': [],
         'errors': [],
         'student_number_length': 10,
-        'number_of_questions': 5
+        'number_of_questions': 5,
+        'show_utorid': False,
+        'show_signature': False
     }
     PROJECTS_DETAILS[project_id] = project
     save_to_file()
@@ -181,8 +206,10 @@ def update_project():
     data = request.get_data()
     data_obj = json.loads(data)
     project_id = data_obj['id']
-    PROJECTS_DETAILS[project_id]['student_number_length'] = data_obj['student_number_length']
-    PROJECTS_DETAILS[project_id]['number_of_questions'] = data_obj['number_of_questions']
+    PROJECTS_DETAILS[project_id]['student_number_length'] = int(data_obj['student_number_length'])
+    PROJECTS_DETAILS[project_id]['number_of_questions'] = int(data_obj['number_of_questions'])
+    PROJECTS_DETAILS[project_id]['show_utorid'] = data_obj['show_utorid']
+    PROJECTS_DETAILS[project_id]['show_signature'] = data_obj['show_signature']
     save_to_file()
     return jsonify({'status': 'ok'})
 
@@ -230,10 +257,10 @@ def export_csv():
     data = request.get_data()
     data_obj = json.loads(data)
     
-    project_id = data_obj['project_id']
+    project_id = str(data_obj['project_id'])
     users_list = PROJECTS_DETAILS[project_id]['users_list']
-    export_file_name = 'exports/' + project_id + '.csv'
-    number_of_questions = PROJECTS_DETAILS[project_id]['number_of_questions']
+    export_file_name = 'exports/' + project_id + '_' + str(datetime.datetime.now()).replace(' ', '_') + '.csv'
+    number_of_questions = int(PROJECTS_DETAILS[project_id]['number_of_questions'])
     with open(export_file_name, 'w') as file:
         header = ''
         header += 'Student Number,'
@@ -250,11 +277,14 @@ def export_csv():
             line += user['username'] + ','
             line += user['first name'] + ','
             line += user['last name'] + ','
-            for mark in user['marks']:
-                line += mark + ','
+            for i in range(number_of_questions):
+                if i < len(user['marks']):
+                    line += user['marks'][i] + ','
+                else:
+                    line += '0,'
             line = line[:-1] + '\n'
             file.write(line)
-    return jsonify({'status': 'ok'})
+    return jsonify({'file_name': export_file_name})
 
 # simply check if you can ping the server
 @app.route('/api/ping', methods=['GET'])
@@ -382,9 +412,11 @@ def find_coordinates(image_path):
 
     return result
 
-def analyse_image(image_path, coord):
-    if not coord:
-        return 'NO COORD'
+def analyse_image(image_path):
+    print("Corners: ")
+    print(FindCorners(image_path))
+
+    return
 
     # global vars
     width = 1200
@@ -526,15 +558,66 @@ def analyse_image(image_path, coord):
 
     return result
 
+def FindCorners(image_path):
+    paper = cv2.imread(image_path)
+    #paper = cv2.resize(orig_image, (int(scaling[0]), int(scaling[1])))
+    gray_paper = cv2.cvtColor(paper, cv2.COLOR_BGR2GRAY) #convert image of paper to grayscale
+
+    #scaling factor used later
+    ratio = len(paper[0]) / 816.0
+
+    #error detection
+    if ratio == 0:
+        return -1
+
+    corners = [] #array to hold found corners
+
+    #try to find the tags via convolving the image
+    for tag in tags:
+        tag = cv2.resize(tag, (0,0), fx=ratio, fy=ratio) #resize tags to the ratio of the image
+
+        #convolve the image
+        convimg = (cv2.filter2D(np.float32(cv2.bitwise_not(gray_paper)), -1, np.float32(cv2.bitwise_not(tag))))
+
+        #find the maximum of the convolution
+        corner = np.unravel_index(convimg.argmax(), convimg.shape)
+
+        #append the coordinates of the corner
+        corners.append([corner[1], corner[0]]) #reversed because array order is different than image coordinate
+
+    #draw the rectangle around the detected markers
+    for corner in corners:
+        cv2.rectangle(paper, (corner[0] - int(ratio * 25), corner[1] - int(ratio * 25)),
+        (corner[0] + int(ratio * 25), corner[1] + int(ratio * 25)), (0, 255, 0), thickness=2, lineType=8, shift=0)
+
+    #check if detected markers form roughly parallel lines when connected
+    if corners[0][0] - corners[2][0] > epsilon:
+        return None
+
+    if corners[1][0] - corners[3][0] > epsilon:
+        return None
+
+    if corners[0][1] - corners[1][1] > epsilon:
+        return None
+
+    if corners[2][1] - corners[3][1] > epsilon:
+        return None
+
+    return corners
+
 def save_to_file():
     with open('db/db.txt', 'w') as file:
         file.write(json.dumps(PROJECTS_DETAILS))
 
 def read_from_file():
     global PROJECTS_DETAILS 
-    with open('db/db.txt', 'r') as file:
-        PROJECTS_DETAILS = json.load(file)
+    try:
+        with open('db/db.txt', 'r') as file:
+            PROJECTS_DETAILS = json.load(file)
+    except Exception:
+        print('Failed to load the db!')
 
 if __name__ == '__main__':
     read_from_file()
+    analyse_image('uploads/image_65946250.png')
     app.run(host='0.0.0.0')
