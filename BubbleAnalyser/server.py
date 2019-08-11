@@ -23,14 +23,6 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 PROJECTS_DETAILS = {}
 
-#load tracking tags
-tags = [
-    cv2.imread("markers/top_left.png", cv2.IMREAD_GRAYSCALE),
-    cv2.imread("markers/top_right.png", cv2.IMREAD_GRAYSCALE),
-    cv2.imread("markers/bottom_left.png", cv2.IMREAD_GRAYSCALE),
-    cv2.imread("markers/bottom_right.png", cv2.IMREAD_GRAYSCALE)
-]
-
 epsilon = 10 #image error sensitivity
 scaling = [605.0, 835.0] #scaling factor for 8.5in. x 11in. paper
 
@@ -115,12 +107,9 @@ def upload_photo_file():
         filename = secure_filename(file.filename)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(file_path)
-        #coord = PROJECTS_DETAILS[project_id]['coordinates']
 
         try:
-            #print(coord)
-            #result = analyse_image(file_path, coord)
-            result = None
+            result = analyse_image(file_path)
             if not isinstance(result, dict):
                 PROJECTS_DETAILS[project_id]['errors'].append(file_path)
         except:
@@ -414,8 +403,8 @@ def find_coordinates(image_path):
 
 def analyse_image(image_path):
     print("Corners: ")
-    print(FindCorners(image_path))
-
+    corner = FindCorners(image_path)
+    print(corner)
     return
 
     # global vars
@@ -428,7 +417,15 @@ def analyse_image(image_path):
     print(image_path)
 
     orig_image = cv2.imread(image_path)
-    image = cv2.resize(orig_image, (width, height))
+    image = cv2.resize(orig_image, (int(scaling[0]), int(scaling[1])))
+
+    cv2.circle(orig_image, (int(corner[0][0]),int(corner[0][1])), int(10), (0,0,255))
+    cv2.circle(orig_image, (int(corner[1][0]),int(corner[1][1])), int(10), (0,0,255))
+    cv2.circle(orig_image, (int(corner[2][0]),int(corner[2][1])), int(10), (0,0,255))
+    cv2.circle(orig_image, (int(corner[3][0]),int(corner[3][1])), int(10), (0,0,255))
+
+    cv2.imwrite(output_path + '/result.png', orig_image)
+    return None
 
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
@@ -453,7 +450,7 @@ def analyse_image(image_path):
     cv2.circle(image, (int(p3[0]),int(p3[1])), int(4), (0,0,255))
 
     cv2.imwrite(output_path + '/result.png', cv2.resize(image, (600, 800)))
-    return
+    return None
 
     pts1 = np.float32([[p0[0], p0[1]], [p1[0], p1[1]], [p2[0], p2[1]], [p3[0], p3[1]]])
     pts2 = np.float32([[0, 0], [0, 430], [420, 0], [420, 430]])
@@ -560,11 +557,15 @@ def analyse_image(image_path):
 
 def FindCorners(image_path):
     paper = cv2.imread(image_path)
-    #paper = cv2.resize(orig_image, (int(scaling[0]), int(scaling[1])))
+    paper = cv2.resize(paper, (int(scaling[0]), int(scaling[1])))
     gray_paper = cv2.cvtColor(paper, cv2.COLOR_BGR2GRAY) #convert image of paper to grayscale
 
+    cv2.imwrite('./output/result2.png', paper)
+
     #scaling factor used later
-    ratio = len(paper[0]) / 816.0
+    # ratio = len(paper[0]) / 816.0
+    ratio = len(paper[0]) / scaling[0]
+    print(len(paper), len(paper[0]), ratio)
 
     #error detection
     if ratio == 0:
@@ -572,9 +573,44 @@ def FindCorners(image_path):
 
     corners = [] #array to hold found corners
 
+    #load tracking tags
+    tags = ["top_left", "top_right", "bottom_left", "bottom_right"]
+
+    methods = ['cv2.TM_CCOEFF', 'cv2.TM_CCOEFF_NORMED', 'cv2.TM_CCORR',
+        'cv2.TM_CCORR_NORMED', 'cv2.TM_SQDIFF', 'cv2.TM_SQDIFF_NORMED']
+    # methods = ['cv2.TM_CCOEFF']
+
+    for path in tags:
+        tag_path = "markers/" + path + ".png"
+        tag = cv2.resize(cv2.imread(tag_path, cv2.IMREAD_GRAYSCALE), (0,0), fx=ratio, fy=ratio) #resize tags to the ratio of the image
+        w, h = tag.shape[::-1]
+        for meth in methods:
+            img = gray_paper.copy()
+            method = eval(meth)
+            res = cv2.matchTemplate(img,tag,method)
+            min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+            print(min_val, max_val, min_loc, max_loc)
+            if method in [cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]:
+                top_left = min_loc
+            else:
+                top_left = max_loc
+            bottom_right = (top_left[0] + w, top_left[1] + h)
+        
+            cv2.rectangle(img,top_left, bottom_right, 255, 2)
+            cv2.imwrite('./output/result_' + meth + '_' + path + '.png', img)
+
+    return None
+
+    tags = [
+        "markers/top_left.png",
+        "markers/top_right.png",
+        "markers/bottom_left.png",
+        "markers/bottom_right.png"
+    ]
+
     #try to find the tags via convolving the image
-    for tag in tags:
-        tag = cv2.resize(tag, (0,0), fx=ratio, fy=ratio) #resize tags to the ratio of the image
+    for tag_path in tags:
+        tag = cv2.resize(cv2.imread(tag_path, cv2.IMREAD_GRAYSCALE), (0,0), fx=ratio, fy=ratio) #resize tags to the ratio of the image
 
         #convolve the image
         convimg = (cv2.filter2D(np.float32(cv2.bitwise_not(gray_paper)), -1, np.float32(cv2.bitwise_not(tag))))
@@ -589,6 +625,8 @@ def FindCorners(image_path):
     for corner in corners:
         cv2.rectangle(paper, (corner[0] - int(ratio * 25), corner[1] - int(ratio * 25)),
         (corner[0] + int(ratio * 25), corner[1] + int(ratio * 25)), (0, 255, 0), thickness=2, lineType=8, shift=0)
+
+    cv2.imwrite('./output/result3.png', paper)
 
     #check if detected markers form roughly parallel lines when connected
     if corners[0][0] - corners[2][0] > epsilon:
