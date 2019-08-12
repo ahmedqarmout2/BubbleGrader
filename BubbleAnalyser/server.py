@@ -81,6 +81,7 @@ def upload_sample_file():
         PROJECTS_DETAILS[project_id]['coordinates'] = {}
         try:
             result = find_coordinates(sample_path)
+            print(result)
             if isinstance(result, dict):
                 PROJECTS_DETAILS[project_id]['coordinates'] = result
         except:
@@ -325,8 +326,9 @@ def random_string(stringLength):
     return ''.join(random.choice(['0','1','2', '3', '4', '5', '6', '7', '8', '9']) for i in range(stringLength))
 
 def find_coordinates(image_path):
-    width = 1200
-    height = 1600
+    FindCorners(image_path)
+    width = int(scaling[0])
+    height = int(scaling[1])
 
     result = {}
 
@@ -358,6 +360,7 @@ def find_coordinates(image_path):
 
         if shape == "rectangle" or shape == "square":
             x,y,w,h = cv2.boundingRect(c)
+            print(x,y,w,h)
             if h > 20 and h < 40 and w > 20 and w < 40:
                 rectso.append((x, y, w, h))
                 cv2.drawContours(image, [c], -1, (255, 0, 0), -1)
@@ -405,42 +408,39 @@ def analyse_image(image_path):
     print("Corners: ")
     corner = FindCorners(image_path)
     print(corner)
-    return
+    # return
 
     # global vars
-    width = 1200
-    height = 1600
-    output_path = './output'
+    width = int(scaling[0])
+    height = int(scaling[1])
 
     result = {}
 
     print(image_path)
 
     orig_image = cv2.imread(image_path)
-    image = cv2.resize(orig_image, (int(scaling[0]), int(scaling[1])))
-
-    cv2.circle(orig_image, (int(corner[0][0]),int(corner[0][1])), int(10), (0,0,255))
-    cv2.circle(orig_image, (int(corner[1][0]),int(corner[1][1])), int(10), (0,0,255))
-    cv2.circle(orig_image, (int(corner[2][0]),int(corner[2][1])), int(10), (0,0,255))
-    cv2.circle(orig_image, (int(corner[3][0]),int(corner[3][1])), int(10), (0,0,255))
-
-    cv2.imwrite(output_path + '/result.png', orig_image)
-    return None
-
+    image = cv2.resize(orig_image, (width, height))
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
     #thresh = cv2.threshold(blurred,127,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C)[1]
     edged = cv2.Canny(blurred, 75, 200)
-    cv2.imwrite(output_path + '/thresh.png', edged)
+    cv2.imwrite('./output/thresh.png', edged)
     #cv2.imshow("Original", cv2.resize(edged, (600, 800)))
 
     cnts = cv2.findContours(edged.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
 
+    coord = {'bl': (86, 766), 'tl': (86, 472), 'tr': (520, 472), 'br': (520, 766)}
     p0 = coord['tl']
     p1 = coord['tr']
     p2 = coord['bl']
     p3 = coord['br']
+
+    delta = 60
+    p0_piece = gray[p0[1] - delta : p0[1] + delta, p0[0] - delta : p0[0] + delta]
+    p1_piece = gray[p1[1] - delta : p1[1] + delta, p1[0] - delta : p1[0] + delta]
+    p2_piece = gray[p2[1] - delta : p2[1] + delta, p2[0] - delta : p2[0] + delta]
+    p3_piece = gray[p3[1] - delta : p3[1] + delta, p3[0] - delta : p3[0] + delta]
 
     print(p0, p1, p2, p3)
 
@@ -449,29 +449,71 @@ def analyse_image(image_path):
     cv2.circle(image, (int(p2[0]),int(p2[1])), int(4), (0,0,255))
     cv2.circle(image, (int(p3[0]),int(p3[1])), int(4), (0,0,255))
 
-    cv2.imwrite(output_path + '/result.png', cv2.resize(image, (600, 800)))
-    return None
+    cv2.imwrite('./output/result_p0_piece.png', p0_piece)
+    cv2.imwrite('./output/result_p1_piece.png', p1_piece)
+    cv2.imwrite('./output/result_p2_piece.png', p2_piece)
+    cv2.imwrite('./output/result_p3_piece.png', p3_piece)
+    cv2.imwrite('./output/result.png', image)
 
-    pts1 = np.float32([[p0[0], p0[1]], [p1[0], p1[1]], [p2[0], p2[1]], [p3[0], p3[1]]])
-    pts2 = np.float32([[0, 0], [0, 430], [420, 0], [420, 430]])
-    M, status = cv2.findHomography(pts1, pts2)
-    dst = cv2.warpPerspective(image, M, (430, 420))
+    found_p0 = FindCorners2('./output/result_p0_piece.png',
+        './markers/bottom_left.png',
+        './output/result_p0_piece_result.png')
+    found_p1 = FindCorners2('./output/result_p1_piece.png',
+        './markers/bottom_left.png',
+        './output/result_p1_piece_result.png')
+    found_p2 = FindCorners2('./output/result_p2_piece.png',
+        './markers/bottom_left.png',
+        './output/result_p2_piece_result.png')
+    found_p3 = FindCorners2('./output/result_p3_piece.png',
+        './markers/bottom_left.png',
+        './output/result_p3_piece_result.png')
 
+    updated_p0 = (p0[0] - delta + found_p0[0], p0[1] - delta + found_p0[1])
+    updated_p1 = (p1[0] - delta + found_p1[0], p1[1] - delta + found_p1[1])
+    updated_p2 = (p2[0] - delta + found_p2[0], p2[1] - delta + found_p2[1])
+    updated_p3 = (p3[0] - delta + found_p3[0], p3[1] - delta + found_p3[1])
+
+    print('Updated points: ', updated_p0, updated_p1, updated_p2, updated_p3)
+
+    orig_image = cv2.imread(image_path)
+    image = cv2.resize(orig_image, (width, height))
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    cv2.circle(image, (int(updated_p0[0]),int(updated_p0[1])), int(4), (0,0,255))
+    cv2.circle(image, (int(updated_p1[0]),int(updated_p1[1])), int(4), (0,0,255))
+    cv2.circle(image, (int(updated_p2[0]),int(updated_p2[1])), int(4), (0,0,255))
+    cv2.circle(image, (int(updated_p3[0]),int(updated_p3[1])), int(4), (0,0,255))
+    cv2.imwrite('./output/result3.png', image)
+
+    pts1 = np.float32([
+        [updated_p0[0], updated_p0[1]],
+        [updated_p1[0], updated_p1[1]],
+        [updated_p2[0], updated_p2[1]],
+        [updated_p3[0], updated_p3[1]]])
+    pts2 = np.float32([
+        [0, 0],
+        [860, 0],
+        [0, 480],
+        [860, 480]])
+    M = cv2.findHomography(pts1, pts2)[0]
+    dst = cv2.warpPerspective(image, M, (860, 480))
+    cv2.imwrite('./output/result4.png', dst)
+    
     dst2 = dst
     dst = cv2.cvtColor(dst, cv2.COLOR_BGR2GRAY)
-    dst = cv2.GaussisdanBlur(dst, (5, 5), 0)
-    dst = cv2.threshold(dst,127,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C)[1]
+    dst = cv2.GaussianBlur(dst, (5, 5), 0)
+    dst = cv2.threshold(dst, 127, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C)[1]
+    cv2.imwrite('./output/result5.png', dst)
 
     # cv2.imshow("New Image", image)
 
-    studentNumber = '_'*10
-    def_x = 18
-    def_y = 10
+    studentNumber = '_' * 10
+    def_x = 42
+    def_y = 24
     counter_x = def_x
     counter_y = def_y
     for i in range(10):
         counter_x = def_x
-        counter_y += 18.5
+        counter_y += 20
         for j in range(10):
             avg = np.mean(dst[int(counter_y)-4:int(counter_y)+8,int(counter_x)-4:int(counter_x)+8])
             if avg and avg > 200:
@@ -481,10 +523,14 @@ def analyse_image(image_path):
             else:
                 cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,255,0))
             cv2.rectangle(dst2,(int(counter_x)-4,int(counter_y)-4),(int(counter_x)+8,int(counter_y)+8),(255,0,0))
-            counter_x += 19
+            counter_x += 21.5
 
     print('Student Number: ', studentNumber)
     result['student_id'] = studentNumber
+
+    cv2.imwrite('./output/result6.png', dst2)
+
+    return None
 
     q1Number = '_'*2
     def_x = 18
@@ -555,6 +601,18 @@ def analyse_image(image_path):
 
     return result
 
+def FindCorners2(image_path, tag_path, result_path):
+    ratio = 32.0/50.0
+    paper = cv2.imread(image_path)
+    tag = cv2.resize(cv2.imread(tag_path, cv2.IMREAD_GRAYSCALE), (0,0), fx=ratio, fy=ratio)
+    convimg = (cv2.filter2D(np.float32(cv2.bitwise_not(paper)), -1, np.float32(cv2.bitwise_not(tag))))
+    corner = np.unravel_index(convimg.argmax(), convimg.shape)
+    corner = (corner[1], corner[0])
+    cv2.rectangle(paper, (corner[0] - int(ratio * 25), corner[1] - int(ratio * 25)),
+        (corner[0] + int(ratio * 25), corner[1] + int(ratio * 25)), (0, 255, 0), thickness=2, lineType=8, shift=0)
+    cv2.imwrite(result_path, paper)
+    return corner
+
 def FindCorners(image_path):
     paper = cv2.imread(image_path)
     paper = cv2.resize(paper, (int(scaling[0]), int(scaling[1])))
@@ -596,7 +654,7 @@ def FindCorners(image_path):
                 top_left = max_loc
             bottom_right = (top_left[0] + w, top_left[1] + h)
         
-            cv2.rectangle(img,top_left, bottom_right, 255, 2)
+            cv2.rectangle(img,top_left, bottom_right, 0, 2)
             cv2.imwrite('./output/result_' + meth + '_' + path + '.png', img)
 
     return None
