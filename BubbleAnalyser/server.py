@@ -506,6 +506,16 @@ def analyse_image(image_path):
 
     # cv2.imshow("New Image", image)
 
+    mark_student_number(dst, dst2)
+    for i in range(10):
+        mark_question(i, dst, dst2, False)
+    mark_question(10, dst, dst2, True)
+
+    cv2.imwrite('./output/result6.png', dst2)
+
+    return None
+
+def mark_student_number(dst, dst2):
     studentNumber = '_' * 10
     def_x = 42
     def_y = 24
@@ -517,7 +527,7 @@ def analyse_image(image_path):
         for j in range(10):
             avg = np.mean(dst[int(counter_y)-4:int(counter_y)+8,int(counter_x)-4:int(counter_x)+8])
             if avg and avg > 200:
-                print('row:', i, 'col:', j, 'value:', avg)
+                # print('row:', i, 'col:', j, 'value:', avg)
                 studentNumber = studentNumber[:j] + str(i) + studentNumber[j+1:]
                 cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,0,255))
             else:
@@ -526,80 +536,39 @@ def analyse_image(image_path):
             counter_x += 21.5
 
     print('Student Number: ', studentNumber)
-    result['student_id'] = studentNumber
-
-    cv2.imwrite('./output/result6.png', dst2)
+    # result['student_id'] = studentNumber
 
     return None
 
-    q1Number = '_'*2
-    def_x = 18
-    def_y = 210
+def mark_question(index, dst, dst2, isTotal):
+    qNumber = '_' * 3
+    def_x = 42 + index * 21.5 * 3 + index * 8
+    def_y = 280
     counter_x = def_x
     counter_y = def_y
-    for i in range(2):
-        counter_x = def_x
-        counter_y += 18.5
-        for j in range(10):
+    for j in range(3):
+        counter_y = def_y
+        y_range = 1 if j == 2 else 10
+        for i in range(y_range):
             avg = np.mean(dst[int(counter_y)-4:int(counter_y)+8,int(counter_x)-4:int(counter_x)+8])
             if avg and avg > 200:
-                print('row:', i, 'col:', j, 'value:', avg)
-                q1Number = q1Number[:i] + str(j) + q1Number[i+1:]
+                # print('row:', i, 'col:', j, 'value:', avg)
+                qNumber = qNumber[:j] + str(i) + qNumber[j+1:]
                 cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,0,255))
             else:
                 cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,255,0))
             cv2.rectangle(dst2,(int(counter_x)-4,int(counter_y)-4),(int(counter_x)+8,int(counter_y)+8),(255,0,0))
-            counter_x += 19
+            counter_y += 20
+        counter_x += 21.5
 
-    result['question_marks'] = []
-    result['question_marks'].append(q1Number)
-    print('Q1: ', q1Number)
+    # result['question_marks'] = []
+    # result['question_marks'].append(qNumber)
+    if isTotal:
+        print('Total: ', qNumber)
+    else:
+        print('Q' + str(index + 1) + ': ', qNumber)
 
-    q2Number = '_'*2
-    def_x = 18
-    def_y = 250
-    counter_x = def_x
-    counter_y = def_y
-    for i in range(2):
-        counter_x = def_x
-        counter_y += 18.5
-        for j in range(10):
-            avg = np.mean(dst[int(counter_y)-4:int(counter_y)+8,int(counter_x)-4:int(counter_x)+8])
-            if avg and avg > 200:
-                print('row:', i, 'col:', j, 'value:', avg)
-                q2Number = q2Number[:i] + str(j) + q2Number[i+1:]
-                cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,0,255))
-            else:
-                cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,255,0))
-            cv2.rectangle(dst2,(int(counter_x)-4,int(counter_y)-4),(int(counter_x)+8,int(counter_y)+8),(255,0,0))
-            counter_x += 19
-
-    result['question_marks'].append(q2Number)
-    print('Q2: ', q2Number)
-
-    def_x = 18
-    def_y = 290
-    counter_x = def_x
-    counter_y = def_y
-    for i in range(2):
-        counter_x = def_x
-        counter_y += 18.5
-        for j in range(10):
-            avg = np.mean(dst[int(counter_y)-4:int(counter_y)+8,int(counter_x)-4:int(counter_x)+8])
-            if avg and avg > 200:
-                print('row:', i, 'col:', j, 'value:', avg)
-                cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,0,255))
-            else:
-                cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,255,0))
-            cv2.rectangle(dst2,(int(counter_x)-4,int(counter_y)-4),(int(counter_x)+8,int(counter_y)+8),(255,0,0))
-            counter_x += 19
-
-    #cv2.imshow("New Image 2", dst2)
-
-    cv2.imwrite(output_path + '/result.png', cv2.resize(image, (600, 800)))
-    #cv2.imshow("Image", cv2.resize(image, (600, 800)))
-
-    return result
+    return None
 
 def FindCorners2(image_path, tag_path, result_path):
     ratio = 32.0/50.0
