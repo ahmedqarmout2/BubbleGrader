@@ -1,26 +1,21 @@
 'use strict';
-
 let CURRENT_PROJECT = {}
 let SELECTED_ERROR_IMAGE_PATH = '';
-
-const bottom_left_marker = document.getElementById('bottom_left_marker');
-const bottom_right_marker = document.getElementById('bottom_right_marker');
-const top_left_marker = document.getElementById('top_left_marker');
-const top_right_marker = document.getElementById('top_right_marker');
-
+const marker = document.getElementById('marker');
 $(function () {
   get_project_list();
 });
-
 function get_project_list() {
   $.ajax({
     url: "/api/projects/list",
     success: function (data) {
       display_project_list(data['projects_list']);
+    },
+    error: function (data) {
+      alert('Failed to get the list of projects, try again later!');
     }
   });
 }
-
 function get_project_data(project_id) {
   $.ajax({
     url: `/api/project/data/${project_id}`,
@@ -29,7 +24,6 @@ function get_project_data(project_id) {
       const users_list = data['users_list'];
       const errors_list = data['errors'];
       const number_of_questions = data['number_of_questions'];
-
       let users_table = '';
       users_list.forEach(user_object => {
         const student_number = user_object['student number'];
@@ -38,7 +32,6 @@ function get_project_data(project_id) {
           const mark = user_object['marks'][i];
           mark_columns += `<td id="${student_number}_question_${i+1}">${mark ? mark : 0}</td>`;
         }
-
         users_table += `
           <tr>
             <td id="${student_number}_student_number">${student_number}</td>
@@ -52,7 +45,6 @@ function get_project_data(project_id) {
           </tr>
         `;
       });
-
       let errors_table = '';
       if (errors_list.length == 0) {
         errors_table = 'Nothing here yet!';
@@ -73,13 +65,11 @@ function get_project_data(project_id) {
         `;
         });
       }
-
       let questions_columns = '';
       for (let i = 0; i < number_of_questions; i++) {
         questions_columns += `<th class="th-sm">Question ${i+1}</th>`;
       }
       questions_columns += '<th class="th-sm">Actions</th>';
-
       $('#nav-tabContent').html(
         `
           <div class="tab-pane fade show active" id="list-home" role="tabpanel" aria-labelledby="list-home-list">
@@ -184,10 +174,12 @@ function get_project_data(project_id) {
       );
       $('#dtBasicExample').DataTable();
       $('.dataTables_length').addClass('bs-select');
+    },
+    error: function (data) {
+      alert('Failed to get the details of the project, try again later!');
     }
   });
 }
-
 function export_classlist() {
   $.ajax({
     method: 'post',
@@ -197,7 +189,6 @@ function export_classlist() {
     }),
     success: function (data) {
       const file_path = `http://${window.location.host}/${data['file_name']}`;
-      console.log(file_path);
       const win = window.open(file_path, '_blank');
       win.focus();
     },
@@ -206,10 +197,8 @@ function export_classlist() {
     }
   });
 }
-
 function create_project() {
   let project_name = $('#inputIconEx1').val();
-
   $.ajax({
     method: 'post',
     url: `/api/project/create`,
@@ -219,18 +208,18 @@ function create_project() {
     success: function (data) {
       get_project_list();
       $('#inputIconEx1').val('');
+    },
+    error: function (data) {
+      alert('Failed to create the project, try again later!');
     }
   });
 }
-
 function edit_error(photo_path) {
   if (!photo_path) {
     $('#edit_img').hide();
   }
-
   $('#edit_img').attr("src", photo_path);
   SELECTED_ERROR_IMAGE_PATH = photo_path;
-
   let text = `
     <div class="md-form">
       <i class="fas fa-file prefix"></i>
@@ -238,7 +227,6 @@ function edit_error(photo_path) {
       <label for="studentNumberInput">Student Number</label>
     </div>
   `;
-
   for (let i = 0; i < CURRENT_PROJECT['number_of_questions']; i += 2) {
     let second_col = ``;
     if (i + 1 < CURRENT_PROJECT['number_of_questions']) {
@@ -252,7 +240,6 @@ function edit_error(photo_path) {
         </div>
       `;
     }
-
     text += `
       <div class="form-row">
         <div class="col">
@@ -268,12 +255,10 @@ function edit_error(photo_path) {
   }
   $('#edit_info').html(text);
 }
-
 function remove_error(photo_path) {
   SELECTED_ERROR_IMAGE_PATH = photo_path;
   remove_image();
 }
-
 function remove_image() {
   $.ajax({
     method: 'post',
@@ -284,11 +269,9 @@ function remove_image() {
     }),
     success: function (data) {
       var index = CURRENT_PROJECT['errors'].indexOf(SELECTED_ERROR_IMAGE_PATH);
-
       if (index > -1) {
         CURRENT_PROJECT['errors'].splice(index, 1);
       }
-
       let errors_table = '';
       if (CURRENT_PROJECT['errors'].length == 0) {
         errors_table = 'Nothing here yet!';
@@ -309,22 +292,19 @@ function remove_image() {
         `;
         });
       }
-
       $('#errors_table_p').html(errors_table);
     },
     error: function (data) {
-      alert('Failed to remove the image!');
+      alert('Failed to remove the image, try again later!');
     }
   });
 }
-
 function update_mark() {
   const student_number = $('#studentNumberInput').val();
   let questions = [];
   for (let i = 0; i < CURRENT_PROJECT['number_of_questions']; i++) {
     questions.push($(`#questionNumber${i+1}Input`).val());
   }
-
   $.ajax({
     method: 'post',
     url: `/api/mark/update`,
@@ -343,11 +323,10 @@ function update_mark() {
       }
     },
     error: function (data) {
-      alert('Failed to update the mark!');
+      alert('Failed to update the mark, try again later!');
     }
   });
 }
-
 function display_project_list(project_list) {
   let list_tab = '';
   project_list.forEach(project_info => {
@@ -356,26 +335,21 @@ function display_project_list(project_list) {
   });
   $('#list-tab').html(list_tab);
 }
-
 function upload_file() {
   const file_info = $('#inputGroupFile01');
   const files = file_info.get(0).files;
   let formData = new FormData();
-
   if (files.length !== 1) {
     alert('You can only upload one file at a time!');
     return;
   }
-
   let fileNameSplit = files[0].name.split('.');
   if (fileNameSplit[fileNameSplit.length - 1] !== 'csv') {
     alert('Only csv files are accepted!');
     return;
   }
-
   formData.append('file', files[0]);
   formData.append('id', CURRENT_PROJECT['id']);
-
   $.ajax({
     type: 'POST',
     url: '/api/upload/classlist',
@@ -390,26 +364,21 @@ function upload_file() {
     }
   });
 }
-
 function upload_sample() {
   const file_info = $('#inputGroupFile02');
   const files = file_info.get(0).files;
   let formData = new FormData();
-
   if (files.length !== 1) {
     alert('You can only upload one file at a time!');
     return;
   }
-
   let fileNameSplit = files[0].name.split('.');
   if (fileNameSplit[fileNameSplit.length - 1] !== 'pdf') {
     alert('Only csv files are accepted!');
     return;
   }
-
   formData.append('file', files[0]);
   formData.append('id', CURRENT_PROJECT['id']);
-
   $.ajax({
     type: 'POST',
     url: '/api/upload/sample',
@@ -424,7 +393,6 @@ function upload_sample() {
     }
   });
 }
-
 function update_project() {
   const student_number_length = $('#student_number_length_number').val();
   const number_of_questions = $('#number_of_questions_number').val();
@@ -446,21 +414,19 @@ function update_project() {
       CURRENT_PROJECT['show_utorid'] = show_utorid;
       CURRENT_PROJECT['show_signature'] = show_signature;
       generate_image();
+    },
+    error: function (data) {
+      alert('Failed to update the project, try again later!');
     }
   });
 }
-
 function generate_image() {
   const studentCanvas = document.getElementById('student_number_sheet');
   const ctx = studentCanvas.getContext('2d');
-
   studentCanvas.width = 860;
   studentCanvas.height = 480;
-
-  // draw background
   ctx.fillStyle = "white";
   ctx.fillRect(0, 0, studentCanvas.width, studentCanvas.height);
-
   draw_text(ctx, 'First Name: _____________________________', studentCanvas.width - 340, 30);
   draw_text(ctx, 'Last Name: _____________________________', studentCanvas.width - 340, 60);
   if (CURRENT_PROJECT['show_utorid']) {
@@ -469,54 +435,40 @@ function generate_image() {
   if (CURRENT_PROJECT['show_signature']) {
     draw_text(ctx, 'Signature: ______________________________', studentCanvas.width - 340, 120);
   }
-
   draw_corners(ctx, studentCanvas.width, studentCanvas.height);
   draw_student_number_section(ctx, CURRENT_PROJECT['student_number_length']);
   draw_questions_section(ctx, CURRENT_PROJECT['number_of_questions']);
-
   $('#student_number_sheet_div').show();
 }
-
 function draw_corners(ctx, width, height) {
   ctx.fillStyle = "#000000";
   ctx.lineWidth = 6;
   ctx.beginPath();
-  // ctx.fillRect(0, 0, 20, 20);
-  // ctx.fillRect(0, height - 20, 20, 20);
-  // ctx.fillRect(width - 20, 0, 20, 20);
-  // ctx.fillRect(width - 20, height - 20, 20, 20);
-  ctx.drawImage(top_left_marker, 0, 0);
-  ctx.drawImage(top_right_marker, width - 50, 0);
-  ctx.drawImage(bottom_left_marker, 0, height - 50);
-  ctx.drawImage(bottom_right_marker, width - 50, height - 50);
+  ctx.drawImage(marker, 0, 0);
+  ctx.drawImage(marker, width - 50, 0);
+  ctx.drawImage(marker, 0, height - 50);
+  ctx.drawImage(marker, width - 50, height - 50);
   ctx.stroke();
   ctx.closePath();
 }
-
 function draw_text(ctx, text, x, y) {
   ctx.fillStyle = "#000000";
   ctx.lineWidth = 1;
   ctx.font = "12px Arial";
   ctx.fillText(text, x, y);
 }
-
 function draw_student_number_section(ctx, student_number_length) {
   const x = 60;
   const y = 30;
-
   draw_text(ctx, 'Student Number:', x, y);
-
   for (let i = 0; i < student_number_length; i++) {
     draw_text(ctx, '__', x + i * 20, y + 20);
   }
-
   draw_bubbles_vertical(ctx, x, y + 30, student_number_length, 10);
 }
-
 function draw_questions_section(ctx, number_of_questions) {
   const x = 60;
   const y = 260;
-
   for (let i = 0; i < number_of_questions; i++) {
     draw_text(ctx, `Q${i+1}: _____`, x + i * 68 + 28, y);
     draw_bubbles_vertical(ctx, x + i * 68, y + 12, 2, 10);
@@ -526,7 +478,6 @@ function draw_questions_section(ctx, number_of_questions) {
   draw_bubbles_vertical(ctx, x + number_of_questions * 68, y + 12, 2, 10);
   draw_bubble(ctx, x + number_of_questions * 68 + 40, y + 12, 8, '0.5', '#ffffff');
 }
-
 function draw_bubbles_vertical(ctx, x, y, columnCount, rowCount) {
   const padding = 2;
   const bubble_radius = 8;
@@ -534,7 +485,6 @@ function draw_bubbles_vertical(ctx, x, y, columnCount, rowCount) {
   let start_x = x;
   let bubble_x = start_x;
   let bubble_y = y;
-
   let coordinateJson = []
   for (i = 0; i < rowCount; i++) {
     for (j = 0; j < columnCount; j++) {
@@ -549,10 +499,8 @@ function draw_bubbles_vertical(ctx, x, y, columnCount, rowCount) {
     bubble_x = start_x;
     bubble_y += bubble_radius * 2 + padding;
   }
-
   return coordinateJson;
 }
-
 function draw_bubble(ctx, x, y, radius, text, color) {
   ctx.beginPath();
   ctx.arc(x + radius, y + radius, radius, 0, 2 * Math.PI);

@@ -72,11 +72,10 @@ def upload_sample_file():
         flash('No selected file')
         return jsonify({'error': 'No selected file'})
     if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], project_id + '_sample.pdf')
         file.save(file_path)
         page = convert_from_path(file_path, 500)[0]
-        sample_path = os.path.join(app.config['UPLOAD_FOLDER'], 'sample')
+        sample_path = os.path.join(app.config['UPLOAD_FOLDER'], project_id + '_sample.png')
         page.save(sample_path, 'png')
         PROJECTS_DETAILS[project_id]['coordinates'] = {}
         try:
@@ -85,7 +84,9 @@ def upload_sample_file():
             if isinstance(result, dict):
                 PROJECTS_DETAILS[project_id]['coordinates'] = result
         except:
-            pass
+            abort(400)
+            abort(Response('Invalid Sample. Could not locate the 4 markers, please try again!'))
+            return
         save_to_file()
         return jsonify({'msg': 'ok'})
     else:
@@ -110,9 +111,13 @@ def upload_photo_file():
         file.save(file_path)
 
         try:
-            result = analyse_image(file_path)
+            result = analyse_image(project_id, file_path, filename.replace('.png', ''))
             if not isinstance(result, dict):
                 PROJECTS_DETAILS[project_id]['errors'].append(file_path)
+            else:
+                abort(400)
+                abort(Response(result))
+                return
         except:
             PROJECTS_DETAILS[project_id]['errors'].append(file_path)
         save_to_file()
@@ -281,9 +286,11 @@ def export_csv():
 def ping():
     return jsonify({'pong': 'ok'})
 
+# checked if the file type is allowed by its extension
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+# read the csv into an array of student objects
 def get_users_list_from_csv_file(file_path):
     student_number_index = 0
     username_index = 1
@@ -322,11 +329,11 @@ def get_users_list_from_csv_file(file_path):
             line_count += 1
     return users_list
 
+# generate a random string that consists of numbers only
 def random_string(stringLength):
     return ''.join(random.choice(['0','1','2', '3', '4', '5', '6', '7', '8', '9']) for i in range(stringLength))
 
 def find_coordinates(image_path):
-    FindCorners(image_path)
     width = int(scaling[0])
     height = int(scaling[1])
 
@@ -404,85 +411,77 @@ def find_coordinates(image_path):
 
     return result
 
-def analyse_image(image_path):
-    print("Corners: ")
-    corner = FindCorners(image_path)
-    print(corner)
-    # return
+def analyse_image(project_id, image_path, image_name):
+    if 'coordinates' not in PROJECTS_DETAILS[project_id] or not isinstance(PROJECTS_DETAILS[project_id]['coordinates'], dict):
+        return "Invalid coord"
 
-    # global vars
+    coord = PROJECTS_DETAILS[project_id]['coordinates']
+
     width = int(scaling[0])
     height = int(scaling[1])
 
     result = {}
 
-    print(image_path)
+    print('processing: ', image_path)
 
     orig_image = cv2.imread(image_path)
     image = cv2.resize(orig_image, (width, height))
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-    #thresh = cv2.threshold(blurred,127,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C)[1]
     edged = cv2.Canny(blurred, 75, 200)
-    cv2.imwrite('./output/thresh.png', edged)
-    #cv2.imshow("Original", cv2.resize(edged, (600, 800)))
+    cv2.imwrite('./processing/' + image_name + '_filtered.png', edged)
 
     cnts = cv2.findContours(edged.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
-
-    coord = {'bl': (86, 766), 'tl': (86, 472), 'tr': (520, 472), 'br': (520, 766)}
+    
     p0 = coord['tl']
     p1 = coord['tr']
     p2 = coord['bl']
     p3 = coord['br']
 
-    delta = 60
-    p0_piece = gray[p0[1] - delta : p0[1] + delta, p0[0] - delta : p0[0] + delta]
-    p1_piece = gray[p1[1] - delta : p1[1] + delta, p1[0] - delta : p1[0] + delta]
-    p2_piece = gray[p2[1] - delta : p2[1] + delta, p2[0] - delta : p2[0] + delta]
-    p3_piece = gray[p3[1] - delta : p3[1] + delta, p3[0] - delta : p3[0] + delta]
-
-    print(p0, p1, p2, p3)
+    print(coord)
 
     cv2.circle(image, (int(p0[0]),int(p0[1])), int(4), (0,0,255))
     cv2.circle(image, (int(p1[0]),int(p1[1])), int(4), (0,0,255))
     cv2.circle(image, (int(p2[0]),int(p2[1])), int(4), (0,0,255))
     cv2.circle(image, (int(p3[0]),int(p3[1])), int(4), (0,0,255))
 
-    cv2.imwrite('./output/result_p0_piece.png', p0_piece)
-    cv2.imwrite('./output/result_p1_piece.png', p1_piece)
-    cv2.imwrite('./output/result_p2_piece.png', p2_piece)
-    cv2.imwrite('./output/result_p3_piece.png', p3_piece)
-    cv2.imwrite('./output/result.png', image)
+    cv2.imwrite('./processing/' + image_name + '_original_markers.png', image)
 
-    found_p0 = FindCorners2('./output/result_p0_piece.png',
-        './markers/bottom_left.png',
-        './output/result_p0_piece_result.png')
-    found_p1 = FindCorners2('./output/result_p1_piece.png',
-        './markers/bottom_left.png',
-        './output/result_p1_piece_result.png')
-    found_p2 = FindCorners2('./output/result_p2_piece.png',
-        './markers/bottom_left.png',
-        './output/result_p2_piece_result.png')
-    found_p3 = FindCorners2('./output/result_p3_piece.png',
-        './markers/bottom_left.png',
-        './output/result_p3_piece_result.png')
+    piece0_dxl, piece0_dxr, piece0_dyu, piece0_dyd = calculate_marker_area(p0, width, height)
+    piece1_dxl, piece1_dxr, piece1_dyu, piece1_dyd = calculate_marker_area(p1, width, height)
+    piece2_dxl, piece2_dxr, piece2_dyu, piece2_dyd = calculate_marker_area(p2, width, height)
+    piece3_dxl, piece3_dxr, piece3_dyu, piece3_dyd = calculate_marker_area(p3, width, height)
+    
+    p0_piece = gray[p0[1] - piece0_dyu : p0[1] + piece0_dyd, p0[0] - piece0_dxl : p0[0] + piece0_dxr]
+    p1_piece = gray[p1[1] - piece1_dyu : p1[1] + piece1_dyd, p1[0] - piece1_dxl : p1[0] + piece1_dxr]
+    p2_piece = gray[p2[1] - piece2_dyu : p2[1] + piece2_dyd, p2[0] - piece2_dxl : p2[0] + piece2_dxr]
+    p3_piece = gray[p3[1] - piece3_dyu : p3[1] + piece3_dyd, p3[0] - piece3_dxl : p3[0] + piece3_dxr]
 
-    updated_p0 = (p0[0] - delta + found_p0[0], p0[1] - delta + found_p0[1])
-    updated_p1 = (p1[0] - delta + found_p1[0], p1[1] - delta + found_p1[1])
-    updated_p2 = (p2[0] - delta + found_p2[0], p2[1] - delta + found_p2[1])
-    updated_p3 = (p3[0] - delta + found_p3[0], p3[1] - delta + found_p3[1])
+    cv2.imwrite('./processing/' + image_name + '_p0_piece.png', p0_piece)
+    cv2.imwrite('./processing/' + image_name + '_p1_piece.png', p1_piece)
+    cv2.imwrite('./processing/' + image_name + '_p2_piece.png', p2_piece)
+    cv2.imwrite('./processing/' + image_name + '_p3_piece.png', p3_piece)
+
+    found_p0 = find_marker('./processing/' + image_name + '_p0_piece.png', './processing/' + image_name + '_p0_piece_result.png')
+    found_p1 = find_marker('./processing/' + image_name + '_p1_piece.png', './processing/' + image_name + '_p1_piece_result.png')
+    found_p2 = find_marker('./processing/' + image_name + '_p2_piece.png', './processing/' + image_name + '_p2_piece_result.png')
+    found_p3 = find_marker('./processing/' + image_name + '_p3_piece.png', './processing/' + image_name + '_p3_piece_result.png')
+
+    updated_p0 = (p0[0] - piece0_dxl + found_p0[0], p0[1] - piece0_dyu + found_p0[1])
+    updated_p1 = (p1[0] - piece1_dxl + found_p1[0], p1[1] - piece1_dyu + found_p1[1])
+    updated_p2 = (p2[0] - piece2_dxl + found_p2[0], p2[1] - piece2_dyu + found_p2[1])
+    updated_p3 = (p3[0] - piece3_dxl + found_p3[0], p3[1] - piece3_dyu + found_p3[1])
 
     print('Updated points: ', updated_p0, updated_p1, updated_p2, updated_p3)
 
     orig_image = cv2.imread(image_path)
     image = cv2.resize(orig_image, (width, height))
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     cv2.circle(image, (int(updated_p0[0]),int(updated_p0[1])), int(4), (0,0,255))
     cv2.circle(image, (int(updated_p1[0]),int(updated_p1[1])), int(4), (0,0,255))
     cv2.circle(image, (int(updated_p2[0]),int(updated_p2[1])), int(4), (0,0,255))
     cv2.circle(image, (int(updated_p3[0]),int(updated_p3[1])), int(4), (0,0,255))
-    cv2.imwrite('./output/result3.png', image)
+    cv2.imwrite('./processing/' + image_name + '_updated_markers.png', image)
 
     pts1 = np.float32([
         [updated_p0[0], updated_p0[1]],
@@ -496,53 +495,50 @@ def analyse_image(image_path):
         [860, 480]])
     M = cv2.findHomography(pts1, pts2)[0]
     dst = cv2.warpPerspective(image, M, (860, 480))
-    cv2.imwrite('./output/result4.png', dst)
+    cv2.imwrite('./processing/' + image_name + '_marks_section.png', dst)
     
     dst2 = dst
     dst = cv2.cvtColor(dst, cv2.COLOR_BGR2GRAY)
     dst = cv2.GaussianBlur(dst, (5, 5), 0)
     dst = cv2.threshold(dst, 127, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C)[1]
-    cv2.imwrite('./output/result5.png', dst)
+    cv2.imwrite('./processing/' + image_name + '_marks_section_filtered.png', dst)
 
-    # cv2.imshow("New Image", image)
-
-    mark_student_number(dst, dst2)
-    for i in range(10):
+    mark_student_number(dst, dst2, PROJECTS_DETAILS[project_id]['student_number_length'])
+    for i in range(PROJECTS_DETAILS[project_id]['number_of_questions']):
         mark_question(i, dst, dst2, False)
-    mark_question(10, dst, dst2, True)
-
-    cv2.imwrite('./output/result6.png', dst2)
+    mark_question(PROJECTS_DETAILS[project_id]['number_of_questions'], dst, dst2, True)
+    cv2.imwrite('./processing/' + image_name + '_marks_section_marked.png', dst2)
 
     return None
 
-def mark_student_number(dst, dst2):
-    studentNumber = '_' * 10
-    def_x = 42
-    def_y = 24
+# detect the hightlighted bubbles in the student number section. if the hightlighting is not proper, then flag the msg
+def mark_student_number(dst, dst2, student_number_length):
+    studentNumber = '_' * student_number_length
+    def_x = 46
+    def_y = 42
     counter_x = def_x
     counter_y = def_y
-    for i in range(10):
-        counter_x = def_x
-        counter_y += 20
-        for j in range(10):
+    for j in range(student_number_length):
+        counter_y = def_y 
+        for i in range(10):
             avg = np.mean(dst[int(counter_y)-4:int(counter_y)+8,int(counter_x)-4:int(counter_x)+8])
             if avg and avg > 200:
-                # print('row:', i, 'col:', j, 'value:', avg)
                 studentNumber = studentNumber[:j] + str(i) + studentNumber[j+1:]
                 cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,0,255))
             else:
                 cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,255,0))
             cv2.rectangle(dst2,(int(counter_x)-4,int(counter_y)-4),(int(counter_x)+8,int(counter_y)+8),(255,0,0))
-            counter_x += 21.5
+            counter_y += 20
+        counter_x += 21.5
 
     print('Student Number: ', studentNumber)
-    # result['student_id'] = studentNumber
 
     return None
 
+# detect the hightlighted bubbles in the questions section. if the hightlighting is not proper, then flag the msg
 def mark_question(index, dst, dst2, isTotal):
-    qNumber = '_' * 3
-    def_x = 42 + index * 21.5 * 3 + index * 8
+    mark = '_' * 3
+    def_x = 46 + index * 21.5 * 3 + index * 7
     def_y = 280
     counter_x = def_x
     counter_y = def_y
@@ -552,8 +548,7 @@ def mark_question(index, dst, dst2, isTotal):
         for i in range(y_range):
             avg = np.mean(dst[int(counter_y)-4:int(counter_y)+8,int(counter_x)-4:int(counter_x)+8])
             if avg and avg > 200:
-                # print('row:', i, 'col:', j, 'value:', avg)
-                qNumber = qNumber[:j] + str(i) + qNumber[j+1:]
+                mark = mark[:j] + str(i) + mark[j+1:]
                 cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,0,255))
             else:
                 cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,255,0))
@@ -561,19 +556,31 @@ def mark_question(index, dst, dst2, isTotal):
             counter_y += 20
         counter_x += 21.5
 
-    # result['question_marks'] = []
-    # result['question_marks'].append(qNumber)
     if isTotal:
-        print('Total: ', qNumber)
+        print('Total: ', mark)
     else:
-        print('Q' + str(index + 1) + ': ', qNumber)
+        print('Q' + str(index + 1) + ': ', mark)
 
     return None
 
-def FindCorners2(image_path, tag_path, result_path):
+# find the boundries of where the marker could be located based on the optimal location
+def calculate_marker_area(point, width, height):
+    delta = 80
+    point_x = point[0]
+    point_y = point[1]
+    piece_dxl = delta if point_x - delta > 0 else point_x
+    piece_dxr = delta if point_x + delta < width else width - point_x
+    piece_dyd = delta if point_y + delta < height else height - point_y
+    piece_dyu = delta if point_y - delta > 0 else point_y
+    print(point, piece_dxl, piece_dxr, piece_dyu, piece_dyd)
+    return (piece_dxl, piece_dxr, piece_dyu, piece_dyd)
+
+# use convolution to find the area that is similar to the marker
+def find_marker(input_path, result_path):
+    marker_path = './markers/marker.png'
     ratio = 32.0/50.0
-    paper = cv2.imread(image_path)
-    tag = cv2.resize(cv2.imread(tag_path, cv2.IMREAD_GRAYSCALE), (0,0), fx=ratio, fy=ratio)
+    paper = cv2.imread(input_path)
+    tag = cv2.resize(cv2.imread(marker_path, cv2.IMREAD_GRAYSCALE), (0,0), fx=ratio, fy=ratio)
     convimg = (cv2.filter2D(np.float32(cv2.bitwise_not(paper)), -1, np.float32(cv2.bitwise_not(tag))))
     corner = np.unravel_index(convimg.argmax(), convimg.shape)
     corner = (corner[1], corner[0])
@@ -582,98 +589,12 @@ def FindCorners2(image_path, tag_path, result_path):
     cv2.imwrite(result_path, paper)
     return corner
 
-def FindCorners(image_path):
-    paper = cv2.imread(image_path)
-    paper = cv2.resize(paper, (int(scaling[0]), int(scaling[1])))
-    gray_paper = cv2.cvtColor(paper, cv2.COLOR_BGR2GRAY) #convert image of paper to grayscale
-
-    cv2.imwrite('./output/result2.png', paper)
-
-    #scaling factor used later
-    # ratio = len(paper[0]) / 816.0
-    ratio = len(paper[0]) / scaling[0]
-    print(len(paper), len(paper[0]), ratio)
-
-    #error detection
-    if ratio == 0:
-        return -1
-
-    corners = [] #array to hold found corners
-
-    #load tracking tags
-    tags = ["top_left", "top_right", "bottom_left", "bottom_right"]
-
-    methods = ['cv2.TM_CCOEFF', 'cv2.TM_CCOEFF_NORMED', 'cv2.TM_CCORR',
-        'cv2.TM_CCORR_NORMED', 'cv2.TM_SQDIFF', 'cv2.TM_SQDIFF_NORMED']
-    # methods = ['cv2.TM_CCOEFF']
-
-    for path in tags:
-        tag_path = "markers/" + path + ".png"
-        tag = cv2.resize(cv2.imread(tag_path, cv2.IMREAD_GRAYSCALE), (0,0), fx=ratio, fy=ratio) #resize tags to the ratio of the image
-        w, h = tag.shape[::-1]
-        for meth in methods:
-            img = gray_paper.copy()
-            method = eval(meth)
-            res = cv2.matchTemplate(img,tag,method)
-            min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
-            print(min_val, max_val, min_loc, max_loc)
-            if method in [cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]:
-                top_left = min_loc
-            else:
-                top_left = max_loc
-            bottom_right = (top_left[0] + w, top_left[1] + h)
-        
-            cv2.rectangle(img,top_left, bottom_right, 0, 2)
-            cv2.imwrite('./output/result_' + meth + '_' + path + '.png', img)
-
-    return None
-
-    tags = [
-        "markers/top_left.png",
-        "markers/top_right.png",
-        "markers/bottom_left.png",
-        "markers/bottom_right.png"
-    ]
-
-    #try to find the tags via convolving the image
-    for tag_path in tags:
-        tag = cv2.resize(cv2.imread(tag_path, cv2.IMREAD_GRAYSCALE), (0,0), fx=ratio, fy=ratio) #resize tags to the ratio of the image
-
-        #convolve the image
-        convimg = (cv2.filter2D(np.float32(cv2.bitwise_not(gray_paper)), -1, np.float32(cv2.bitwise_not(tag))))
-
-        #find the maximum of the convolution
-        corner = np.unravel_index(convimg.argmax(), convimg.shape)
-
-        #append the coordinates of the corner
-        corners.append([corner[1], corner[0]]) #reversed because array order is different than image coordinate
-
-    #draw the rectangle around the detected markers
-    for corner in corners:
-        cv2.rectangle(paper, (corner[0] - int(ratio * 25), corner[1] - int(ratio * 25)),
-        (corner[0] + int(ratio * 25), corner[1] + int(ratio * 25)), (0, 255, 0), thickness=2, lineType=8, shift=0)
-
-    cv2.imwrite('./output/result3.png', paper)
-
-    #check if detected markers form roughly parallel lines when connected
-    if corners[0][0] - corners[2][0] > epsilon:
-        return None
-
-    if corners[1][0] - corners[3][0] > epsilon:
-        return None
-
-    if corners[0][1] - corners[1][1] > epsilon:
-        return None
-
-    if corners[2][1] - corners[3][1] > epsilon:
-        return None
-
-    return corners
-
+# save a dump of the object that holds the information about all projects
 def save_to_file():
     with open('db/db.txt', 'w') as file:
         file.write(json.dumps(PROJECTS_DETAILS))
 
+# read the database dump into an object
 def read_from_file():
     global PROJECTS_DETAILS 
     try:
@@ -684,5 +605,5 @@ def read_from_file():
 
 if __name__ == '__main__':
     read_from_file()
-    analyse_image('uploads/image_65946250.png')
+    analyse_image('7382', './uploads/image_129148705.png', 'image_129148705')
     app.run(host='0.0.0.0')
