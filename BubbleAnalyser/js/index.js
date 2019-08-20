@@ -423,7 +423,7 @@ function update_project() {
 function generate_image() {
   const studentCanvas = document.getElementById('student_number_sheet');
   const ctx = studentCanvas.getContext('2d');
-  studentCanvas.width = 860;
+  studentCanvas.width = 880;
   studentCanvas.height = 480;
   ctx.fillStyle = "white";
   ctx.fillRect(0, 0, studentCanvas.width, studentCanvas.height);
@@ -474,9 +474,9 @@ function draw_questions_section(ctx, number_of_questions) {
     draw_bubbles_vertical(ctx, x + i * 68, y + 12, 2, 10);
     draw_bubble(ctx, x + i * 68 + 40, y + 12, 8, '0.5', '#ffffff');
   }
-  draw_text(ctx, `Total: _____`, x + number_of_questions * 68 + 28, y);
-  draw_bubbles_vertical(ctx, x + number_of_questions * 68, y + 12, 2, 10);
-  draw_bubble(ctx, x + number_of_questions * 68 + 40, y + 12, 8, '0.5', '#ffffff');
+  draw_text(ctx, `Total: _______`, x + number_of_questions * 68 + 36, y);
+  draw_bubbles_vertical(ctx, x + number_of_questions * 68, y + 12, 3, 10);
+  draw_bubble(ctx, x + number_of_questions * 68 + 60, y + 12, 8, '0.5', '#f0f0f0');
 }
 function draw_bubbles_vertical(ctx, x, y, columnCount, rowCount) {
   const padding = 2;

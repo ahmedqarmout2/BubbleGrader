@@ -490,11 +490,11 @@ def analyse_image(project_id, image_path, image_name):
         [updated_p3[0], updated_p3[1]]])
     pts2 = np.float32([
         [0, 0],
-        [860, 0],
+        [880, 0],
         [0, 480],
-        [860, 480]])
+        [880, 480]])
     M = cv2.findHomography(pts1, pts2)[0]
-    dst = cv2.warpPerspective(image, M, (860, 480))
+    dst = cv2.warpPerspective(image, M, (880, 480))
     cv2.imwrite('./processing/' + image_name + '_marks_section.png', dst)
     
     dst2 = dst
@@ -505,8 +505,8 @@ def analyse_image(project_id, image_path, image_name):
 
     mark_student_number(dst, dst2, PROJECTS_DETAILS[project_id]['student_number_length'])
     for i in range(PROJECTS_DETAILS[project_id]['number_of_questions']):
-        mark_question(i, dst, dst2, False)
-    mark_question(PROJECTS_DETAILS[project_id]['number_of_questions'], dst, dst2, True)
+        mark_question(i, dst, dst2)
+    mark_total(PROJECTS_DETAILS[project_id]['number_of_questions'], dst, dst2)
     cv2.imwrite('./processing/' + image_name + '_marks_section_marked.png', dst2)
 
     return None
@@ -521,13 +521,13 @@ def mark_student_number(dst, dst2, student_number_length):
     for j in range(student_number_length):
         counter_y = def_y 
         for i in range(10):
-            avg = np.mean(dst[int(counter_y)-4:int(counter_y)+8,int(counter_x)-4:int(counter_x)+8])
-            if avg and avg > 200:
+            avg = np.mean(dst[int(counter_y)-6:int(counter_y)+12,int(counter_x)-6:int(counter_x)+12])
+            if avg and avg > 100:
                 studentNumber = studentNumber[:j] + str(i) + studentNumber[j+1:]
                 cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,0,255))
             else:
                 cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,255,0))
-            cv2.rectangle(dst2,(int(counter_x)-4,int(counter_y)-4),(int(counter_x)+8,int(counter_y)+8),(255,0,0))
+            cv2.rectangle(dst2,(int(counter_x)-6,int(counter_y)-6),(int(counter_x)+12,int(counter_y)+12),(255,0,0))
             counter_y += 20
         counter_x += 21.5
 
@@ -536,8 +536,8 @@ def mark_student_number(dst, dst2, student_number_length):
     return None
 
 # detect the hightlighted bubbles in the questions section. if the hightlighting is not proper, then flag the msg
-def mark_question(index, dst, dst2, isTotal):
-    mark = '_' * 3
+def mark_question(index, dst, dst2):
+    mark = '_' * 2
     def_x = 46 + index * 21.5 * 3 + index * 7
     def_y = 280
     counter_x = def_x
@@ -546,20 +546,48 @@ def mark_question(index, dst, dst2, isTotal):
         counter_y = def_y
         y_range = 1 if j == 2 else 10
         for i in range(y_range):
-            avg = np.mean(dst[int(counter_y)-4:int(counter_y)+8,int(counter_x)-4:int(counter_x)+8])
-            if avg and avg > 200:
-                mark = mark[:j] + str(i) + mark[j+1:]
+            avg = np.mean(dst[int(counter_y)-6:int(counter_y)+12,int(counter_x)-6:int(counter_x)+12])
+            if avg and avg > 100:
+                if j == 2:
+                    mark += '.5'
+                else:
+                    mark = mark[:j] + str(i) + mark[j+1:]
                 cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,0,255))
             else:
                 cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,255,0))
-            cv2.rectangle(dst2,(int(counter_x)-4,int(counter_y)-4),(int(counter_x)+8,int(counter_y)+8),(255,0,0))
+            cv2.rectangle(dst2,(int(counter_x)-6,int(counter_y)-6),(int(counter_x)+12,int(counter_y)+12),(255,0,0))
             counter_y += 20
         counter_x += 21.5
 
-    if isTotal:
-        print('Total: ', mark)
-    else:
-        print('Q' + str(index + 1) + ': ', mark)
+    print('Q' + str(index + 1) + ': ', mark)
+
+    return None
+
+# detect the hightlighted bubbles in the questions section. if the hightlighting is not proper, then flag the msg
+def mark_total(index, dst, dst2):
+    mark = '_' * 3
+    def_x = 46 + index * 21.5 * 3 + index * 7
+    def_y = 280
+    counter_x = def_x
+    counter_y = def_y
+    for j in range(4):
+        counter_y = def_y
+        y_range = 1 if j == 3 else 10
+        for i in range(y_range):
+            avg = np.mean(dst[int(counter_y)-6:int(counter_y)+12,int(counter_x)-6:int(counter_x)+12])
+            if avg and avg > 100:
+                if j == 3:
+                    mark += '.5'
+                else:
+                    mark = mark[:j] + str(i) + mark[j+1:]
+                cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,0,255))
+            else:
+                cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,255,0))
+            cv2.rectangle(dst2,(int(counter_x)-6,int(counter_y)-6),(int(counter_x)+12,int(counter_y)+12),(255,0,0))
+            counter_y += 20
+        counter_x += 21.5
+
+    print('Total: ', mark)
 
     return None
 
@@ -605,5 +633,5 @@ def read_from_file():
 
 if __name__ == '__main__':
     read_from_file()
-    analyse_image('7382', './uploads/image_129148705.png', 'image_129148705')
+    analyse_image('7382', './uploads/image_57857628.png', 'image_57857628')
     app.run(host='0.0.0.0')
