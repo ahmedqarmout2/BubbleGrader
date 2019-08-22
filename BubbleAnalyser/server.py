@@ -105,6 +105,7 @@ def upload_photo_file():
         file.save(file_path)
         try:
             result = analyse_image(project_id, file_path, filename.replace('.png', ''))
+            print(result)
             if isinstance(result, dict):
                 user_found = False
                 for i in range(len(PROJECTS_DETAILS[project_id]['users_list'])):
@@ -540,10 +541,11 @@ def mark_student_number(dst, dst2, student_number_length):
         counter_y = def_y 
         for i in range(10):
             avg = np.mean(dst[int(counter_y)-6:int(counter_y)+12,int(counter_x)-6:int(counter_x)+12])
-            if avg and avg > 100:
+            if avg and avg > 90:
                 studentNumber = studentNumber[:j] + str(i) + studentNumber[j+1:]
                 cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,0,255))
             else:
+                print("student number:"+str(avg))
                 cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,255,0))
             cv2.rectangle(dst2,(int(counter_x)-6,int(counter_y)-6),(int(counter_x)+12,int(counter_y)+12),(255,0,0))
             counter_y += 20
@@ -563,13 +565,16 @@ def mark_question(index, dst, dst2):
         y_range = 1 if j == 2 else 10
         for i in range(y_range):
             avg = np.mean(dst[int(counter_y)-6:int(counter_y)+12,int(counter_x)-6:int(counter_x)+12])
-            if avg and avg > 100:
+            if avg and avg > 90:
                 if j == 2:
                     mark += '.5'
                 else:
+                    if mark[j] != '_':
+                        return 'Invalid mark!'
                     mark = mark[:j] + str(i) + mark[j+1:]
                 cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,0,255))
             else:
+                print("Q"+str(index)+":"+str(avg))
                 cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,255,0))
             cv2.rectangle(dst2,(int(counter_x)-6,int(counter_y)-6),(int(counter_x)+12,int(counter_y)+12),(255,0,0))
             counter_y += 20
@@ -589,13 +594,14 @@ def mark_total(index, dst, dst2):
         y_range = 1 if j == 3 else 10
         for i in range(y_range):
             avg = np.mean(dst[int(counter_y)-6:int(counter_y)+12,int(counter_x)-6:int(counter_x)+12])
-            if avg and avg > 100:
+            if avg and avg > 90:
                 if j == 3:
                     mark += '.5'
                 else:
                     mark = mark[:j] + str(i) + mark[j+1:]
                 cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,0,255))
             else:
+                print("total:"+str(avg))
                 cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,255,0))
             cv2.rectangle(dst2,(int(counter_x)-6,int(counter_y)-6),(int(counter_x)+12,int(counter_y)+12),(255,0,0))
             counter_y += 20
@@ -644,4 +650,5 @@ def read_from_file():
 
 if __name__ == '__main__':
     read_from_file()
+    print(analyse_image('0652','./uploads/image_27150915.png','image_27150915'))
     app.run(host='0.0.0.0')
