@@ -39,6 +39,7 @@ function get_project_data(project_id) {
             <td id="${student_number}_first_name">${user_object['first name']}</td>
             <td id="${student_number}_last_name">${user_object['last name']}</td>
             ${mark_columns}
+            <td id="${student_number}_total">${user_object['total']}</td>
             <td id="${student_number}_action">
               <button type="button" class="btn btn-primary px-3" data-toggle="modal" data-target="#basicExampleModal3" onClick="edit_error(undefined)"><i class="fas fa-edit" aria-hidden="true"></i></button>
             </td>
@@ -69,6 +70,7 @@ function get_project_data(project_id) {
       for (let i = 0; i < number_of_questions; i++) {
         questions_columns += `<th class="th-sm">Question ${i+1}</th>`;
       }
+      questions_columns += '<th class="th-sm">Total</th>';
       questions_columns += '<th class="th-sm">Actions</th>';
       $('#nav-tabContent').html(
         `
@@ -301,9 +303,9 @@ function remove_image() {
 }
 function update_mark() {
   const student_number = $('#studentNumberInput').val();
-  let questions = [];
+  let marks = [];
   for (let i = 0; i < CURRENT_PROJECT['number_of_questions']; i++) {
-    questions.push($(`#questionNumber${i+1}Input`).val());
+    marks.push($(`#questionNumber${i+1}Input`).val());
   }
   $.ajax({
     method: 'post',
@@ -311,7 +313,7 @@ function update_mark() {
     data: JSON.stringify({
       project_id: CURRENT_PROJECT['id'],
       student_number: student_number,
-      questions: questions
+      marks: marks
     }),
     success: function (data) {
       for (let i = 0; i < CURRENT_PROJECT['number_of_questions']; i++) {
@@ -360,7 +362,7 @@ function upload_file() {
       get_project_data(CURRENT_PROJECT['id']);
     },
     error: function (data) {
-      alert(JSON.stringify(data));
+      alert(JSON.stringify(data['responseText']));
     }
   });
 }
@@ -389,7 +391,7 @@ function upload_sample() {
       // get_project_data(CURRENT_PROJECT['id']);
     },
     error: function (data) {
-      alert(JSON.stringify(data));
+      alert(JSON.stringify(data['responseText']));
     }
   });
 }

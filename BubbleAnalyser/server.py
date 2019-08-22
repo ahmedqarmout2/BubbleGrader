@@ -10,7 +10,7 @@ import imutils
 import datetime
 
 from pyimagesearch.shapedetector import ShapeDetector
-from flask import Flask, jsonify, send_from_directory, flash, request, redirect, url_for, abort, Response
+from flask import Flask, jsonify, send_from_directory, flash, request, redirect, url_for
 from werkzeug.utils import secure_filename
 from pdf2image import convert_from_path
 
@@ -42,13 +42,11 @@ def get_projects_list():
 @app.route('/api/upload/classlist', methods=['POST'])
 def upload_classlist_file():
     if 'file' not in request.files:
-        flash('No file part')
-        return jsonify({'error': 'No file part'})
+        return 'No file part!', 400
     file = request.files['file']
     project_id = request.form['id']
     if file.filename == '':
-        flash('No selected file')
-        return jsonify({'error': 'No selected file'})
+        return 'No selected file!', 400
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
@@ -58,19 +56,17 @@ def upload_classlist_file():
         save_to_file()
         return jsonify({'msg': 'ok'})
     else:
-        return jsonify({'error': 'unknown file type'})
+        return 'Unknown file type!', 400
 
 # upload sample of the exam paper
 @app.route('/api/upload/sample', methods=['POST'])
 def upload_sample_file():
     if 'file' not in request.files:
-        flash('No file part')
-        return jsonify({'error': 'No file part'})
+        return 'No file part!', 400
     file = request.files['file']
     project_id = request.form['id']
     if file.filename == '':
-        flash('No selected file')
-        return jsonify({'error': 'No selected file'})
+        return 'No selected file!', 400
     if file and allowed_file(file.filename):
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], project_id + '_sample.pdf')
         file.save(file_path)
@@ -80,50 +76,54 @@ def upload_sample_file():
         PROJECTS_DETAILS[project_id]['coordinates'] = {}
         try:
             result = find_coordinates(sample_path)
-            print(result)
             if isinstance(result, dict):
                 PROJECTS_DETAILS[project_id]['coordinates'] = result
+            else:
+                return 'Invalid Sample. Could not locate the 4 markers, please try again!', 400
         except:
-            abort(400)
-            abort(Response('Invalid Sample. Could not locate the 4 markers, please try again!'))
-            return
+            return 'Invalid Sample. Could not locate the 4 markers, please try again!', 400
         save_to_file()
         return jsonify({'msg': 'ok'})
     else:
-        return jsonify({'error': 'unknown file type'})
+        return 'Unknown file type!', 400
 
 # upload photos
 @app.route('/api/upload/photo', methods=['POST'])
 def upload_photo_file():
     project_id = str(request.headers['Project-Id'])
     if project_id not in PROJECTS_DETAILS:
-        return
+        return 'Invalid project id!', 400
     if 'photo' not in request.files:
-        flash('No file part')
-        return jsonify({'error': 'No file part'})
+        return 'No file part!', 400
     file = request.files['photo']
     if file.filename == '':
         flash('No selected file')
-        return jsonify({'error': 'No selected file'})
+        return 'No selected file!', 400
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(file_path)
-
         try:
             result = analyse_image(project_id, file_path, filename.replace('.png', ''))
-            if not isinstance(result, dict):
-                PROJECTS_DETAILS[project_id]['errors'].append(file_path)
+            if isinstance(result, dict):
+                user_found = False
+                for i in range(len(PROJECTS_DETAILS[project_id]['users_list'])):
+                    user = PROJECTS_DETAILS[project_id]['users_list'][i]
+                    if user['student number'] == result['student number']:
+                        user_found = True
+                        PROJECTS_DETAILS[project_id]['users_list'][i]['marks'] = result['marks']
+                        PROJECTS_DETAILS[project_id]['users_list'][i]['total'] = result['total']
+                        break
+                if not user_found:
+                    PROJECTS_DETAILS[project_id]['errors'].append(file_path)
             else:
-                abort(400)
-                abort(Response(result))
-                return
+                PROJECTS_DETAILS[project_id]['errors'].append(file_path)
         except:
             PROJECTS_DETAILS[project_id]['errors'].append(file_path)
         save_to_file()
         return jsonify({'msg': 'ok'})
     else:
-        return jsonify({'error': 'unknown file type'})
+        return 'Unknown file type!', 400
 
 #serve home page
 @app.route('/')
@@ -216,19 +216,28 @@ def update_mark():
     
     project_id = data_obj['project_id']
     student_number = data_obj['student_number']
-    questions = data_obj['questions']
+    marks = data_obj['marks']
 
-    found = False
+    total = 0.0
+    float_marks = []
+    try:
+        for mark in marks:
+            float_mark = float(mark)
+            float_marks.append(float_mark)
+            total += float_mark
+    except:
+        return 'User not found!', 400
+
+    user_found = False
     for i in range(len(PROJECTS_DETAILS[project_id]['users_list'])):
         user = PROJECTS_DETAILS[project_id]['users_list'][i]
         if user['student number'] == student_number:
-            found = True
-            PROJECTS_DETAILS[project_id]['users_list'][i]['marks'] = questions
+            user_found = True
+            PROJECTS_DETAILS[project_id]['users_list'][i]['marks'] = float_marks
+            PROJECTS_DETAILS[project_id]['users_list'][i]['total'] = total
 
-    if not found:
-        abort(400)
-        abort(Response('user not found'))
-        return
+    if not user_found:
+        return 'User not found!', 400
 
     save_to_file()
     return jsonify({'status': 'ok'})
@@ -264,6 +273,7 @@ def export_csv():
         header += 'Last Name,'
         for i in range(number_of_questions):
             header += 'Question ' + str(i + 1) + ','
+        header += 'Total,'
         header = header[:-1] + '\n'
         file.write(header)
         for user in users_list:
@@ -277,6 +287,7 @@ def export_csv():
                     line += user['marks'][i] + ','
                 else:
                     line += '0,'
+            line += user['total'] + ','       
             line = line[:-1] + '\n'
             file.write(line)
     return jsonify({'file_name': export_file_name})
@@ -320,11 +331,12 @@ def get_users_list_from_csv_file(file_path):
                 if is_header:
                     continue
             users_list.append({
-                'student number': row[student_number_index],
+                'student number': int(row[student_number_index]),
                 'username': row[username_index],
                 'first name': row[first_name_index],
                 'last name': row[last_name_index],
-                'marks': []
+                'marks': [],
+                'total': 0
             })
             line_count += 1
     return users_list
@@ -333,6 +345,7 @@ def get_users_list_from_csv_file(file_path):
 def random_string(stringLength):
     return ''.join(random.choice(['0','1','2', '3', '4', '5', '6', '7', '8', '9']) for i in range(stringLength))
 
+# find coordinates or markers in an image
 def find_coordinates(image_path):
     width = int(scaling[0])
     height = int(scaling[1])
@@ -344,9 +357,7 @@ def find_coordinates(image_path):
 
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-    #thresh = cv2.threshold(blurred,127,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C)[1]
     edged = cv2.Canny(blurred, 75, 200)
-    #cv2.imshow("Original", cv2.resize(edged, (600, 800)))
 
     cnts = cv2.findContours(edged.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
@@ -359,22 +370,14 @@ def find_coordinates(image_path):
         if (M["m00"] == 0):
             continue
 
-        #cv2.drawContours(image, [c], -1, (255, 0, 0), -1)
-
-        cX = int((M["m10"] / M["m00"]))
-        cY = int((M["m01"] / M["m00"]))
         shape = sd.detect(c)
 
         if shape == "rectangle" or shape == "square":
             x,y,w,h = cv2.boundingRect(c)
-            print(x,y,w,h)
             if h > 20 and h < 40 and w > 20 and w < 40:
                 rectso.append((x, y, w, h))
                 cv2.drawContours(image, [c], -1, (255, 0, 0), -1)
                 cv2.rectangle(image, (x,y), (x+w,y+h), (0,255,0), 2)
-                print(shape, cX, cY)
-
-    print(len(rectso))
 
     if len(rectso) != 4:
         return "ERROR"
@@ -399,18 +402,14 @@ def find_coordinates(image_path):
         if bottom_two_points[0][0] > bottom_two_points[1][0]:
             bottom_two_points[0], bottom_two_points[1] = bottom_two_points[1], bottom_two_points[0]
 
-        print(top_two_points)
-        print(bottom_two_points)
-
         result['tl'] = (top_two_points[0][0] + top_two_points[0][2], top_two_points[0][1])
         result['tr'] = (top_two_points[1][0], top_two_points[1][1])
         result['bl'] = (bottom_two_points[0][0] + bottom_two_points[0][2], bottom_two_points[0][1] + bottom_two_points[0][3])
         result['br'] = (bottom_two_points[1][0], bottom_two_points[1][1] + bottom_two_points[1][3])
 
-        print(result)
-
     return result
 
+# locate the marking section, then look for highlighted bubbles
 def analyse_image(project_id, image_path, image_name):
     if 'coordinates' not in PROJECTS_DETAILS[project_id] or not isinstance(PROJECTS_DETAILS[project_id]['coordinates'], dict):
         return "Invalid coord"
@@ -419,10 +418,6 @@ def analyse_image(project_id, image_path, image_name):
 
     width = int(scaling[0])
     height = int(scaling[1])
-
-    result = {}
-
-    print('processing: ', image_path)
 
     orig_image = cv2.imread(image_path)
     image = cv2.resize(orig_image, (width, height))
@@ -438,8 +433,6 @@ def analyse_image(project_id, image_path, image_name):
     p1 = coord['tr']
     p2 = coord['bl']
     p3 = coord['br']
-
-    print(coord)
 
     cv2.circle(image, (int(p0[0]),int(p0[1])), int(4), (0,0,255))
     cv2.circle(image, (int(p1[0]),int(p1[1])), int(4), (0,0,255))
@@ -473,8 +466,6 @@ def analyse_image(project_id, image_path, image_name):
     updated_p2 = (p2[0] - piece2_dxl + found_p2[0], p2[1] - piece2_dyu + found_p2[1])
     updated_p3 = (p3[0] - piece3_dxl + found_p3[0], p3[1] - piece3_dyu + found_p3[1])
 
-    print('Updated points: ', updated_p0, updated_p1, updated_p2, updated_p3)
-
     orig_image = cv2.imread(image_path)
     image = cv2.resize(orig_image, (width, height))
     cv2.circle(image, (int(updated_p0[0]),int(updated_p0[1])), int(4), (0,0,255))
@@ -503,13 +494,40 @@ def analyse_image(project_id, image_path, image_name):
     dst = cv2.threshold(dst, 127, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C)[1]
     cv2.imwrite('./processing/' + image_name + '_marks_section_filtered.png', dst)
 
-    mark_student_number(dst, dst2, PROJECTS_DETAILS[project_id]['student_number_length'])
+    valid_image = True
+
+    student_number = 0
+    try:
+        student_number = int(mark_student_number(dst, dst2, PROJECTS_DETAILS[project_id]['student_number_length']))
+    except:
+        valid_image = False
+    
+    marks = []
     for i in range(PROJECTS_DETAILS[project_id]['number_of_questions']):
-        mark_question(i, dst, dst2)
-    mark_total(PROJECTS_DETAILS[project_id]['number_of_questions'], dst, dst2)
+        try:
+            marks.append(float(mark_question(i, dst, dst2)))
+        except:
+            valid_image = False
+    
+    actual_total = 0.0
+    try:
+        actual_total = float(mark_total(PROJECTS_DETAILS[project_id]['number_of_questions'], dst, dst2))
+    except:
+        valid_image = False
+
+    expected_total = 0.0
+    for mark in marks:
+        expected_total += mark
+    
     cv2.imwrite('./processing/' + image_name + '_marks_section_marked.png', dst2)
 
-    return None
+    result = {
+        'student number': student_number,
+        'marks': marks,
+        'total': actual_total
+    }
+
+    return result if valid_image else None
 
 # detect the hightlighted bubbles in the student number section. if the hightlighting is not proper, then flag the msg
 def mark_student_number(dst, dst2, student_number_length):
@@ -531,9 +549,7 @@ def mark_student_number(dst, dst2, student_number_length):
             counter_y += 20
         counter_x += 21.5
 
-    print('Student Number: ', studentNumber)
-
-    return None
+    return studentNumber
 
 # detect the hightlighted bubbles in the questions section. if the hightlighting is not proper, then flag the msg
 def mark_question(index, dst, dst2):
@@ -559,9 +575,7 @@ def mark_question(index, dst, dst2):
             counter_y += 20
         counter_x += 21.5
 
-    print('Q' + str(index + 1) + ': ', mark)
-
-    return None
+    return mark
 
 # detect the hightlighted bubbles in the questions section. if the hightlighting is not proper, then flag the msg
 def mark_total(index, dst, dst2):
@@ -587,9 +601,7 @@ def mark_total(index, dst, dst2):
             counter_y += 20
         counter_x += 21.5
 
-    print('Total: ', mark)
-
-    return None
+    return mark
 
 # find the boundries of where the marker could be located based on the optimal location
 def calculate_marker_area(point, width, height):
@@ -600,7 +612,6 @@ def calculate_marker_area(point, width, height):
     piece_dxr = delta if point_x + delta < width else width - point_x
     piece_dyd = delta if point_y + delta < height else height - point_y
     piece_dyu = delta if point_y - delta > 0 else point_y
-    print(point, piece_dxl, piece_dxr, piece_dyu, piece_dyd)
     return (piece_dxl, piece_dxr, piece_dyu, piece_dyd)
 
 # use convolution to find the area that is similar to the marker
@@ -633,5 +644,4 @@ def read_from_file():
 
 if __name__ == '__main__':
     read_from_file()
-    analyse_image('7382', './uploads/image_57857628.png', 'image_57857628')
     app.run(host='0.0.0.0')
