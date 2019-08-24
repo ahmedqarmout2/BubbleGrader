@@ -105,7 +105,6 @@ def upload_photo_file():
         file.save(file_path)
         try:
             result = analyse_image(project_id, file_path, filename.replace('.png', ''))
-            print(result)
             if isinstance(result, dict):
                 user_found = False
                 for i in range(len(PROJECTS_DETAILS[project_id]['users_list'])):
@@ -533,23 +532,24 @@ def analyse_image(project_id, image_path, image_name):
 # detect the hightlighted bubbles in the student number section. if the hightlighting is not proper, then flag the msg
 def mark_student_number(dst, dst2, student_number_length):
     studentNumber = '_' * student_number_length
-    def_x = 46
-    def_y = 42
+    def_x = 52
+    def_y = 44
     counter_x = def_x
     counter_y = def_y
     for j in range(student_number_length):
         counter_y = def_y 
         for i in range(10):
-            avg = np.mean(dst[int(counter_y)-6:int(counter_y)+12,int(counter_x)-6:int(counter_x)+12])
-            if avg and avg > 90:
+            avg = np.mean(dst[int(counter_y)-6:int(counter_y)+12, int(counter_x)-6:int(counter_x)+12])
+            if avg and avg > 80:
+                if studentNumber[j] != '_':
+                    return 'Invalid student number!'
                 studentNumber = studentNumber[:j] + str(i) + studentNumber[j+1:]
-                cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,0,255))
+                cv2.circle(dst2, (int(counter_x)+3, int(counter_y)+3), int(6), (0, 255, 0))
             else:
-                print("student number:"+str(avg))
-                cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,255,0))
-            cv2.rectangle(dst2,(int(counter_x)-6,int(counter_y)-6),(int(counter_x)+12,int(counter_y)+12),(255,0,0))
+                cv2.circle(dst2, (int(counter_x)+3, int(counter_y)+3), int(6), (0, 0, 255))
+            cv2.rectangle(dst2, (int(counter_x)-6, int(counter_y)-6), (int(counter_x)+12, int(counter_y)+12), (255, 0, 0))
             counter_y += 20
-        counter_x += 21.5
+        counter_x += 31.5
 
     return studentNumber
 
@@ -564,19 +564,18 @@ def mark_question(index, dst, dst2):
         counter_y = def_y
         y_range = 1 if j == 2 else 10
         for i in range(y_range):
-            avg = np.mean(dst[int(counter_y)-6:int(counter_y)+12,int(counter_x)-6:int(counter_x)+12])
-            if avg and avg > 90:
+            avg = np.mean(dst[int(counter_y)-6:int(counter_y)+12, int(counter_x)-6:int(counter_x)+12])
+            if avg and avg > 80:
                 if j == 2:
                     mark += '.5'
                 else:
                     if mark[j] != '_':
                         return 'Invalid mark!'
                     mark = mark[:j] + str(i) + mark[j+1:]
-                cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,0,255))
+                cv2.circle(dst2, (int(counter_x)+3, int(counter_y)+3), int(6), (0, 255, 0))
             else:
-                print("Q"+str(index)+":"+str(avg))
-                cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,255,0))
-            cv2.rectangle(dst2,(int(counter_x)-6,int(counter_y)-6),(int(counter_x)+12,int(counter_y)+12),(255,0,0))
+                cv2.circle(dst2, (int(counter_x)+3, int(counter_y)+3), int(6), (0, 0, 255))
+            cv2.rectangle(dst2, (int(counter_x)-6, int(counter_y)-6), (int(counter_x)+12, int(counter_y)+12), (255, 0, 0))
             counter_y += 20
         counter_x += 21.5
 
@@ -593,17 +592,18 @@ def mark_total(index, dst, dst2):
         counter_y = def_y
         y_range = 1 if j == 3 else 10
         for i in range(y_range):
-            avg = np.mean(dst[int(counter_y)-6:int(counter_y)+12,int(counter_x)-6:int(counter_x)+12])
-            if avg and avg > 90:
+            avg = np.mean(dst[int(counter_y)-6:int(counter_y)+12, int(counter_x)-6:int(counter_x)+12])
+            if avg and avg > 80:
                 if j == 3:
                     mark += '.5'
                 else:
+                    if mark[j] != '_':
+                        return 'Invalid mark!'
                     mark = mark[:j] + str(i) + mark[j+1:]
-                cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,0,255))
+                cv2.circle(dst2, (int(counter_x)+3, int(counter_y)+3), int(6), (0, 255, 0))
             else:
-                print("total:"+str(avg))
-                cv2.circle(dst2, (int(counter_x),int(counter_y)), int(6), (0,255,0))
-            cv2.rectangle(dst2,(int(counter_x)-6,int(counter_y)-6),(int(counter_x)+12,int(counter_y)+12),(255,0,0))
+                cv2.circle(dst2, (int(counter_x)+3, int(counter_y)+3), int(6), (0, 0, 255))
+            cv2.rectangle(dst2, (int(counter_x)-6, int(counter_y)-6), (int(counter_x)+12, int(counter_y)+12), (255, 0, 0))
             counter_y += 20
         counter_x += 21.5
 
@@ -646,9 +646,9 @@ def read_from_file():
         with open('db/db.txt', 'r') as file:
             PROJECTS_DETAILS = json.load(file)
     except Exception:
-        print('Failed to load the db!')
+        print('Failed to load the db, creating a new one!')
 
 if __name__ == '__main__':
     read_from_file()
-    print(analyse_image('0652','./uploads/image_27150915.png','image_27150915'))
+    print(analyse_image('9389', './uploads/9389_sample.png', '9389_sample'))
     app.run(host='0.0.0.0')

@@ -5,6 +5,7 @@ const marker = document.getElementById('marker');
 $(function () {
   get_project_list();
 });
+
 function get_project_list() {
   $.ajax({
     url: "/api/projects/list",
@@ -16,6 +17,7 @@ function get_project_list() {
     }
   });
 }
+
 function get_project_data(project_id) {
   $.ajax({
     url: `/api/project/data/${project_id}`,
@@ -182,6 +184,7 @@ function get_project_data(project_id) {
     }
   });
 }
+
 function export_classlist() {
   $.ajax({
     method: 'post',
@@ -199,6 +202,7 @@ function export_classlist() {
     }
   });
 }
+
 function create_project() {
   let project_name = $('#inputIconEx1').val();
   $.ajax({
@@ -216,6 +220,7 @@ function create_project() {
     }
   });
 }
+
 function edit_error(photo_path) {
   if (!photo_path) {
     $('#edit_img').hide();
@@ -257,10 +262,12 @@ function edit_error(photo_path) {
   }
   $('#edit_info').html(text);
 }
+
 function remove_error(photo_path) {
   SELECTED_ERROR_IMAGE_PATH = photo_path;
   remove_image();
 }
+
 function remove_image() {
   $.ajax({
     method: 'post',
@@ -301,6 +308,7 @@ function remove_image() {
     }
   });
 }
+
 function update_mark() {
   const student_number = $('#studentNumberInput').val();
   let marks = [];
@@ -329,6 +337,7 @@ function update_mark() {
     }
   });
 }
+
 function display_project_list(project_list) {
   let list_tab = '';
   project_list.forEach(project_info => {
@@ -337,6 +346,7 @@ function display_project_list(project_list) {
   });
   $('#list-tab').html(list_tab);
 }
+
 function upload_file() {
   const file_info = $('#inputGroupFile01');
   const files = file_info.get(0).files;
@@ -366,6 +376,7 @@ function upload_file() {
     }
   });
 }
+
 function upload_sample() {
   const file_info = $('#inputGroupFile02');
   const files = file_info.get(0).files;
@@ -395,6 +406,7 @@ function upload_sample() {
     }
   });
 }
+
 function update_project() {
   const student_number_length = $('#student_number_length_number').val();
   const number_of_questions = $('#number_of_questions_number').val();
@@ -422,6 +434,7 @@ function update_project() {
     }
   });
 }
+
 function generate_image() {
   const studentCanvas = document.getElementById('student_number_sheet');
   const ctx = studentCanvas.getContext('2d');
@@ -442,6 +455,7 @@ function generate_image() {
   draw_questions_section(ctx, CURRENT_PROJECT['number_of_questions']);
   $('#student_number_sheet_div').show();
 }
+
 function draw_corners(ctx, width, height) {
   ctx.fillStyle = "#000000";
   ctx.lineWidth = 6;
@@ -453,21 +467,40 @@ function draw_corners(ctx, width, height) {
   ctx.stroke();
   ctx.closePath();
 }
+
 function draw_text(ctx, text, x, y) {
   ctx.fillStyle = "#000000";
   ctx.lineWidth = 1;
   ctx.font = "12px Arial";
   ctx.fillText(text, x, y);
 }
+
 function draw_student_number_section(ctx, student_number_length) {
   const x = 60;
   const y = 30;
   draw_text(ctx, 'Student Number:', x, y);
   for (let i = 0; i < student_number_length; i++) {
-    draw_text(ctx, '__', x + i * 20, y + 20);
+    draw_text(ctx, '____', x + i * 30, y + 20);
   }
-  draw_bubbles_vertical(ctx, x, y + 30, student_number_length, 10);
+  const columnCount = student_number_length;
+  const rowCount = 10;
+  const padding = 2;
+  const bubble_radius = 8;
+  let i, j;
+  let start_x = 60;
+  let bubble_x = start_x;
+  let bubble_y = 60;
+  for (i = 0; i < rowCount; i++) {
+    for (j = 0; j < columnCount; j++) {
+      const color = (j % 2 == 0) ? '#ffffff' : '#f6f6f6';
+      draw_bubble(ctx, bubble_x + 5, bubble_y, bubble_radius, i, color);
+      bubble_x += bubble_radius * 2 + 14;
+    }
+    bubble_x = start_x;
+    bubble_y += bubble_radius * 2 + padding;
+  }
 }
+
 function draw_questions_section(ctx, number_of_questions) {
   const x = 60;
   const y = 260;
@@ -478,8 +511,9 @@ function draw_questions_section(ctx, number_of_questions) {
   }
   draw_text(ctx, `Total: _______`, x + number_of_questions * 68 + 36, y);
   draw_bubbles_vertical(ctx, x + number_of_questions * 68, y + 12, 3, 10);
-  draw_bubble(ctx, x + number_of_questions * 68 + 60, y + 12, 8, '0.5', '#f0f0f0');
+  draw_bubble(ctx, x + number_of_questions * 68 + 60, y + 12, 8, '0.5', '#f6f6f6');
 }
+
 function draw_bubbles_vertical(ctx, x, y, columnCount, rowCount) {
   const padding = 2;
   const bubble_radius = 8;
@@ -487,22 +521,17 @@ function draw_bubbles_vertical(ctx, x, y, columnCount, rowCount) {
   let start_x = x;
   let bubble_x = start_x;
   let bubble_y = y;
-  let coordinateJson = []
   for (i = 0; i < rowCount; i++) {
     for (j = 0; j < columnCount; j++) {
-      const color = (j % 2 == 0) ? '#ffffff' : '#f0f0f0';
+      const color = (j % 2 == 0) ? '#ffffff' : '#f6f6f6';
       draw_bubble(ctx, bubble_x, bubble_y, bubble_radius, i, color);
-      coordinateJson.push({
-        "x": bubble_x + bubble_radius,
-        "y": bubble_y + bubble_radius
-      })
       bubble_x += bubble_radius * 2 + padding * 2;
     }
     bubble_x = start_x;
     bubble_y += bubble_radius * 2 + padding;
   }
-  return coordinateJson;
 }
+
 function draw_bubble(ctx, x, y, radius, text, color) {
   ctx.beginPath();
   ctx.arc(x + radius, y + radius, radius, 0, 2 * Math.PI);
