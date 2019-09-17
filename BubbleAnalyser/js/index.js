@@ -333,7 +333,7 @@ function update_mark() {
       }
     },
     error: function (data) {
-      alert('Failed to update the mark, try again later!');
+      alert(JSON.stringify(data['responseText']));
     }
   });
 }

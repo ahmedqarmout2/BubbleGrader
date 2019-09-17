@@ -215,7 +215,11 @@ def update_mark():
     data_obj = json.loads(data)
     
     project_id = data_obj['project_id']
-    student_number = data_obj['student_number']
+    try:
+        student_number = int(data_obj['student_number'])
+    except:
+        return 'Invalid student number!', 400
+    
     marks = data_obj['marks']
 
     total = 0.0
@@ -226,7 +230,7 @@ def update_mark():
             float_marks.append(float_mark)
             total += float_mark
     except:
-        return 'User not found!', 400
+        return 'Invalid marks!', 400
 
     user_found = False
     for i in range(len(PROJECTS_DETAILS[project_id]['users_list'])):
@@ -278,16 +282,16 @@ def export_csv():
         file.write(header)
         for user in users_list:
             line = ''
-            line += user['student number'] + ','
+            line += str(user['student number']) + ','
             line += user['username'] + ','
             line += user['first name'] + ','
             line += user['last name'] + ','
             for i in range(number_of_questions):
                 if i < len(user['marks']):
-                    line += user['marks'][i] + ','
+                    line += str(user['marks'][i]) + ','
                 else:
                     line += '0,'
-            line += user['total'] + ','       
+            line += str(user['total']) + ','       
             line = line[:-1] + '\n'
             file.write(line)
     return jsonify({'file_name': export_file_name})
@@ -650,5 +654,4 @@ def read_from_file():
 
 if __name__ == '__main__':
     read_from_file()
-    print(analyse_image('9389', './uploads/9389_sample.png', '9389_sample'))
     app.run(host='0.0.0.0')
