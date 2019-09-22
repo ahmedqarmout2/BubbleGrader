@@ -31,12 +31,20 @@ pip install -r requirements.txt
 ```
 python server.py
 ```
+
 1. Go to the web application from a browser by visiting the following link:
 ```
 http://localhost:5000
 ```
-2. Create a new project
-![New Project Image](/Screenshots/newproject.png?raw=true "New Project Image")
-3. Enter the maximum length of the student number (up to 10 digits), and the number of questions you want to be marked (up to 10 questions). Then click the update button to generate a marking sheet.
+![Project Image](/Screenshots/project.png?raw=true "Project Image")
 
+2. Create a new project.
+![New Project Image](/Screenshots/newproject.png?raw=true "New Project Image")
+
+3. Enter the maximum length of the student number (up to 10 digits), and the number of questions you want to be marked (up to 10 questions). Then click the "UPDATE" button to  save your change and generate a marking sheet.
 ![Marking Sheet Image](/Screenshots/markingsheet.png?raw=true "Marking Sheet Image")
+
+4. Add the marking sheet to the front page of your exam sheet.
+
+5. Export your front page of your exam sheet as a pdf file, then upload it to the web application by clicking the "UPLOAD SAMPLE" button.
+![Upload Sheet Image](/Screenshots/uploadsheet.png?raw=true "Upload Sheet Image")
