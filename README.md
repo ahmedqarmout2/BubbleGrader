@@ -48,3 +48,10 @@ http://localhost:5000
 
 5. Export your front page of your exam sheet as a pdf file, then upload it to the web application by clicking the "UPLOAD SAMPLE" button.
 ![Upload Sheet Image](/Screenshots/uploadsheet.png?raw=true "Upload Sheet Image")
+
+6. Upload your class list as a csv.
+![Upload Class List Image](/Screenshots/uploadclasslist.png?raw=true "Upload Class List Image")
+Your class list file must contain the following columns:
+"student number", "username", "first name", "last name"
+For example:
+![Class List File Image](/Screenshots/classlistfile.png?raw=true "Class List File Image")
