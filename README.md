@@ -53,5 +53,5 @@ http://localhost:5000
 ![Upload Class List Image](/Screenshots/uploadclasslist.png?raw=true "Upload Class List Image")
 Your class list file must contain the following columns:
 "student number", "username", "first name", "last name"
-For example:
 ![Class List File Image](/Screenshots/classlistfile.png?raw=true "Class List File Image")
+![Class List File Image](/Screenshots/classlist.png?raw=true "Class List Image")
