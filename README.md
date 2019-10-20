@@ -3,14 +3,11 @@
 ## Contents
 
 0. [Introduction](#introduction)
-1. [Screenshots](#screenshots)
-2. [Setup](#setup)
-3. [Instructions](#instructions)
+1. [Setup](#setup)
+2. [Instructions](#instructions)
 
 ## Introduction
 Program used to generate bubble sheets for grading, as well as scanning those bubble sheets and exporting the marks into digestable formats.
-
-## Screenshots
 
 ## Setup
 0. Start by cloning the repository.

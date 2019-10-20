@@ -8,11 +8,14 @@ import numpy as np
 import cv2
 import imutils
 import datetime
+import shutil
 
 from pyimagesearch.shapedetector import ShapeDetector
 from flask import Flask, jsonify, send_from_directory, flash, request, redirect, url_for
 from werkzeug.utils import secure_filename
 from pdf2image import convert_from_path
+
+DEBUG = False
 
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'csv'])
@@ -103,8 +106,10 @@ def upload_photo_file():
         filename = secure_filename(file.filename)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(file_path)
+        file_name = filename.replace('.png', '')
         try:
-            result = analyse_image(project_id, file_path, filename.replace('.png', ''))
+            os.mkdir("./processing/" + file_name)
+            result = analyse_image(project_id, file_path, file_name)
             if isinstance(result, dict):
                 user_found = False
                 for i in range(len(PROJECTS_DETAILS[project_id]['users_list'])):
@@ -121,6 +126,8 @@ def upload_photo_file():
         except:
             PROJECTS_DETAILS[project_id]['errors'].append(file_path)
         save_to_file()
+        if not DEBUG:
+            shutil.rmtree("./processing/" + file_name)
         return jsonify({'msg': 'ok'})
     else:
         return 'Unknown file type!', 400
@@ -428,7 +435,7 @@ def analyse_image(project_id, image_path, image_name):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
     edged = cv2.Canny(blurred, 75, 200)
-    cv2.imwrite('./processing/' + image_name + '_filtered.png', edged)
+    cv2.imwrite('./processing/' + image_name + '/' + image_name + '_filtered.png', edged)
 
     cnts = cv2.findContours(edged.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
@@ -443,7 +450,7 @@ def analyse_image(project_id, image_path, image_name):
     cv2.circle(image, (int(p2[0]),int(p2[1])), int(4), (0,0,255))
     cv2.circle(image, (int(p3[0]),int(p3[1])), int(4), (0,0,255))
 
-    cv2.imwrite('./processing/' + image_name + '_original_markers.png', image)
+    cv2.imwrite('./processing/' + image_name + '/' + image_name + '_original_markers.png', image)
 
     piece0_dxl, piece0_dxr, piece0_dyu, piece0_dyd = calculate_marker_area(p0, width, height)
     piece1_dxl, piece1_dxr, piece1_dyu, piece1_dyd = calculate_marker_area(p1, width, height)
@@ -455,15 +462,15 @@ def analyse_image(project_id, image_path, image_name):
     p2_piece = gray[p2[1] - piece2_dyu : p2[1] + piece2_dyd, p2[0] - piece2_dxl : p2[0] + piece2_dxr]
     p3_piece = gray[p3[1] - piece3_dyu : p3[1] + piece3_dyd, p3[0] - piece3_dxl : p3[0] + piece3_dxr]
 
-    cv2.imwrite('./processing/' + image_name + '_p0_piece.png', p0_piece)
-    cv2.imwrite('./processing/' + image_name + '_p1_piece.png', p1_piece)
-    cv2.imwrite('./processing/' + image_name + '_p2_piece.png', p2_piece)
-    cv2.imwrite('./processing/' + image_name + '_p3_piece.png', p3_piece)
+    cv2.imwrite('./processing/' + image_name + '/' + image_name + '_p0_piece.png', p0_piece)
+    cv2.imwrite('./processing/' + image_name + '/' + image_name + '_p1_piece.png', p1_piece)
+    cv2.imwrite('./processing/' + image_name + '/' + image_name + '_p2_piece.png', p2_piece)
+    cv2.imwrite('./processing/' + image_name + '/' + image_name + '_p3_piece.png', p3_piece)
 
-    found_p0 = find_marker('./processing/' + image_name + '_p0_piece.png', './processing/' + image_name + '_p0_piece_result.png')
-    found_p1 = find_marker('./processing/' + image_name + '_p1_piece.png', './processing/' + image_name + '_p1_piece_result.png')
-    found_p2 = find_marker('./processing/' + image_name + '_p2_piece.png', './processing/' + image_name + '_p2_piece_result.png')
-    found_p3 = find_marker('./processing/' + image_name + '_p3_piece.png', './processing/' + image_name + '_p3_piece_result.png')
+    found_p0 = find_marker('./processing/' + image_name + '/' + image_name + '_p0_piece.png', './processing/' + image_name + '/' + image_name + '_p0_piece_result.png')
+    found_p1 = find_marker('./processing/' + image_name + '/' + image_name + '_p1_piece.png', './processing/' + image_name + '/' + image_name + '_p1_piece_result.png')
+    found_p2 = find_marker('./processing/' + image_name + '/' + image_name + '_p2_piece.png', './processing/' + image_name + '/' + image_name + '_p2_piece_result.png')
+    found_p3 = find_marker('./processing/' + image_name + '/' + image_name + '_p3_piece.png', './processing/' + image_name + '/' + image_name + '_p3_piece_result.png')
 
     updated_p0 = (p0[0] - piece0_dxl + found_p0[0], p0[1] - piece0_dyu + found_p0[1])
     updated_p1 = (p1[0] - piece1_dxl + found_p1[0], p1[1] - piece1_dyu + found_p1[1])
@@ -476,7 +483,7 @@ def analyse_image(project_id, image_path, image_name):
     cv2.circle(image, (int(updated_p1[0]),int(updated_p1[1])), int(4), (0,0,255))
     cv2.circle(image, (int(updated_p2[0]),int(updated_p2[1])), int(4), (0,0,255))
     cv2.circle(image, (int(updated_p3[0]),int(updated_p3[1])), int(4), (0,0,255))
-    cv2.imwrite('./processing/' + image_name + '_updated_markers.png', image)
+    cv2.imwrite('./processing/' + image_name + '/' + image_name + '_updated_markers.png', image)
 
     pts1 = np.float32([
         [updated_p0[0], updated_p0[1]],
@@ -490,13 +497,13 @@ def analyse_image(project_id, image_path, image_name):
         [880, 480]])
     M = cv2.findHomography(pts1, pts2)[0]
     dst = cv2.warpPerspective(image, M, (880, 480))
-    cv2.imwrite('./processing/' + image_name + '_marks_section.png', dst)
+    cv2.imwrite('./processing/' + image_name + '/' + image_name + '_marks_section.png', dst)
     
     dst2 = dst
     dst = cv2.cvtColor(dst, cv2.COLOR_BGR2GRAY)
     dst = cv2.GaussianBlur(dst, (5, 5), 0)
     dst = cv2.threshold(dst, 127, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C)[1]
-    cv2.imwrite('./processing/' + image_name + '_marks_section_filtered.png', dst)
+    cv2.imwrite('./processing/' + image_name + '/' + image_name + '_marks_section_filtered.png', dst)
 
     valid_image = True
 
@@ -523,7 +530,7 @@ def analyse_image(project_id, image_path, image_name):
     for mark in marks:
         expected_total += mark
     
-    cv2.imwrite('./processing/' + image_name + '_marks_section_marked.png', dst2)
+    cv2.imwrite('./processing/' + image_name + '/' + image_name + '_marks_section_marked.png', dst2)
 
     result = {
         'student number': student_number,
