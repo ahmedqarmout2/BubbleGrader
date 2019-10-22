@@ -60,6 +60,9 @@ Your class list file must contain the following columns:
 8. Take a photo of the paper. Be careful, shadows and blurriness can cause issues. Make sure the paper is on a flat surface with a dark color.
 ![Paper Image](/Screenshots/paperPhoto.png?raw=true "Paper Image")
 
+Features:
+![Analytics](/Screenshots/analytics.png?raw=true "Analytics")
+
 Note: Refresh the page to see any updates in the marking list. If the web application had issues detecting the marks in the photoes you uploaded, iteams will appear on the "Error List" section. You can manually enter the marks for the problematic photoes.
 ![Error List Image](/Screenshots/errorList1.png?raw=true "Error List Image")
 ![Error List 2 Image](/Screenshots/errorList2.png?raw=true "Error List 2 Image")

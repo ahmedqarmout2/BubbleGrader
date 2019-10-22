@@ -82,7 +82,10 @@ function get_project_data(project_id) {
                 <a class="nav-link active" id="description-tab" data-toggle="tab" href="#description" role="tab" aria-controls="description" aria-selected="true">Description</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">Class List</a>
+                <a class="nav-link" id="classlist-tab" data-toggle="tab" href="#classlist" role="tab" aria-controls="classlist" aria-selected="true">Class List</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" id="analytics-tab" data-toggle="tab" href="#analytics" role="tab" aria-controls="analytics" aria-selected="true">Analytics</a>
               </li>
             </ul>
             <div class="tab-content" id="myTabContent">
@@ -128,7 +131,7 @@ function get_project_data(project_id) {
                   </div>
                 </div>
               </div>
-              <div class="tab-pane fade" id="home" role="tabpanel" aria-labelledby="home-tab">
+              <div class="tab-pane fade" id="classlist" role="tabpanel" aria-labelledby="classlist-tab">
                 <br />
                 <div class="card">
                   <div class="card-header">
@@ -172,15 +175,91 @@ function get_project_data(project_id) {
                   </div>
                 </div>
               </div>
+              <div class="tab-pane fade" id="analytics" role="tabpanel" aria-labelledby="analytics-tab">
+                <br />
+                <div class="card">
+                  <div class="card-header">
+                    Questions Average
+                  </div>
+                  <div class="card-body">
+                    <canvas id="questionsAverage" class="questionsAverageChart"></canvas>
+                  </div>
+                </div>
+                <br />
+              </div>
             </div>
           </div>
         `
       );
       $('#dtBasicExample').DataTable();
       $('.dataTables_length').addClass('bs-select');
+      update_graphs(data);
     },
     error: function (data) {
       alert('Failed to get the details of the project, try again later!');
+    }
+  });
+}
+
+function update_graphs(data) {
+  const number_of_questions = data['number_of_questions'];
+  const users_list = data['users_list'];
+  let questionsAverage = [];
+  let questionsAverageLabels = [];
+  for (let i = 0; i < number_of_questions; i++) {
+    questionsAverage.push(0);
+    questionsAverageLabels.push("Q" + (i + 1));
+  }
+  users_list.forEach(user_object => {
+    for (let i = 0; i < number_of_questions; i++) {
+      const mark = user_object['marks'][i];
+      questionsAverage[i] += mark ? mark : 0;
+    }
+  });
+  for (let i = 0; i < number_of_questions; i++) {
+    questionsAverage[i] = Math.round(questionsAverage[i] / users_list.length);
+  }
+
+  const backgroundColors = [
+    'rgba(0, 0, 0, 0.2)',
+    'rgba(100, 0, 0, 0.2)',
+    'rgba(0, 100, 0, 0.2)',
+    'rgba(0, 0, 100, 0.2)',
+    'rgba(200, 0, 0, 0.2)',
+    'rgba(0, 200, 0, 0.2)',
+    'rgba(0, 0, 200, 0.2)',
+    'rgba(100, 100, 100, 0.2)',
+    'rgba(50, 200, 200, 0.2)',
+    'rgba(200, 100, 200, 0.2)',
+    'rgba(100, 200, 100, 0.2)'
+  ];
+
+  const hoverBackgroundColor = [
+    'rgba(0, 0, 0, 0.6)',
+    'rgba(100, 0, 0, 0.6)',
+    'rgba(0, 100, 0, 0.6)',
+    'rgba(0, 0, 100, 0.6)',
+    'rgba(200, 0, 0, 0.6)',
+    'rgba(0, 200, 0, 0.6)',
+    'rgba(0, 0, 200, 0.6)',
+    'rgba(100, 100, 100, 0.6)',
+    'rgba(50, 200, 200, 0.6)',
+    'rgba(200, 100, 200, 0.6)',
+    'rgba(100, 200, 100, 0.6)'
+  ];
+
+  new Chart($('#questionsAverage')[0].getContext('2d'), {
+    type: 'polarArea',
+    data: {
+      labels: questionsAverageLabels,
+      datasets: [{
+        data: questionsAverage,
+        backgroundColor: backgroundColors.slice(0, number_of_questions),
+        hoverBackgroundColor: hoverBackgroundColor.slice(0, number_of_questions)
+      }]
+    },
+    options: {
+      responsive: true
     }
   });
 }
